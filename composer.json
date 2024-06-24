@@ -1,0 +1,16 @@
+{
+    "name": "codechefmarc/localist_drupal",
+    "description": "Localist integration into Drupal to import events",
+    "type": "drupal-module",
+    "authors": [
+        {
+            "name": "codechefmarc",
+            "email": "marc@fourkitchens.com"
+        }
+    ],
+    "minimum-stability": "dev",
+    "require": {
+        "drupal/migrate_plus": "^6.0",
+        "drupal/migrate_tools": "^6.0"
+    }
+}

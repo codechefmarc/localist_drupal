@@ -1,0 +1,28 @@
+localist_drupal.admin_config_overview:
+  path: '/admin/localist'
+  defaults:
+    _controller: '\Drupal\system\Controller\SystemController::systemAdminMenuBlockPage'
+    _title: 'Localist Configuration'
+  requirements:
+    _permission: 'manage localist'
+localist_drupal.settings:
+  path: '/admin/localist/settings'
+  defaults:
+    _form: '\Drupal\localist_drupal\Form\LocalistSettings'
+    _title: 'Localist Settings'
+  requirements:
+    _permission: 'manage localist'
+localist_drupal.run_migrations:
+  path: '/admin/localist/sync'
+  defaults:
+    _controller: '\Drupal\localist_drupal\Controller\RunMigrations::runAllMigrations'
+    _title: 'Import Localist events now'
+  requirements:
+    _permission: 'manage localist'
+localist_drupal.sync_groups:
+  path: '/admin/localist/sync-groups'
+  defaults:
+    _controller: '\Drupal\localist_drupal\Controller\RunMigrations::syncGroups'
+    _title: 'Sync Localist groups'
+  requirements:
+    _permission: 'manage localist'

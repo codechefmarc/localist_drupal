@@ -1,0 +1,12 @@
+localist_drupal.admin_config:
+  route_name: localist_drupal.admin_config_overview
+  description: 'Sync settings for Localist integration'
+  parent: system.admin_config
+  title: Localist
+  weight: -10
+localist_drupal.admin_settings:
+  title: 'Localist settings'
+  description: 'Configure Localist sync settings'
+  route_name: localist_drupal.settings
+  parent: localist_drupal.admin_config
+  weight: 0

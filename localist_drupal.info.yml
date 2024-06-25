@@ -1,0 +1,10 @@
+name: 'Localist Drupal'
+type: module
+description: 'Provides integration with the Localist event platform to import events.'
+package: Localist
+core_version_requirement: ^10
+configure: localist_drupal.settings
+dependencies:
+  - drupal:migrate
+  - migrate_plus:migrate_plus
+  - migrate_tools:migrate_tools

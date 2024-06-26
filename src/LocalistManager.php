@@ -317,6 +317,27 @@ class LocalistManager extends ControllerBase implements ContainerInjectionInterf
   }
 
   /**
+   * Checks the Localist endpoint to make sure we are receiving a JSON feed.
+   */
+  public function checkEndpoint($endpointUrl) {
+    $returnVal = FALSE;
+    if ($endpoint = $this->localistConfig->get('localist_endpoint')) {
+      $endpointUrl = $endpoint . "/api/2/events";
+      try {
+        $response = $this->httpClient->get($endpointUrl);
+        $returnVal = str_contains($response->getHeader("Content-Type")[0], 'json') ? TRUE : FALSE;
+      }
+      catch (\Throwable $th) {
+
+      }
+
+    }
+
+    return $returnVal;
+
+  }
+
+  /**
    * Checks the group endpoint to make sure we are receiving a JSON feed.
    */
   public function checkGroupsEndpoint() {

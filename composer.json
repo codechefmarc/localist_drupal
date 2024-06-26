@@ -10,8 +10,16 @@
     ],
     "minimum-stability": "dev",
     "require": {
-        "drupal/migrate_plus": "^6.0",
-        "drupal/migrate_tools": "^6.0",
-        "drupal/calendar_link": "^3.0"
+      "cweagans/composer-patches": "^1.7",
+      "drupal/migrate_plus": "^6.0",
+      "drupal/migrate_tools": "^6.0",
+      "drupal/calendar_link": "^3.0"
+    },
+    "extra": {
+      "patches": {
+        "drupal/migrate_plus": {
+        "Allow callback for Url source, and single item Json plugin https://www.drupal.org/project/migrate_plus/issues/3040427": "https://www.drupal.org/files/issues/2023-02-15/3040427-42-migrate_plus_multiple_urls.patch"
+        }
+      }
     }
 }

@@ -22,6 +22,7 @@ This repository has what looks like a full Drupal module, however it is not comp
 * Drupal Core Migrate
 * [Migrate Plus](https://www.drupal.org/project/migrate_plus)
 * [Migrate Tools](https://www.drupal.org/project/migrate_tools)
+* Composer patches to be enabled in the root composer.json - @todo add specific details here
 
 ### Module Overview
 This module contains a basic Drupal module structure with the following:

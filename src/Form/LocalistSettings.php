@@ -98,23 +98,12 @@ class LocalistSettings extends ConfigFormBase {
       '#default_value' => $config->get('enable_localist_sync') ?: FALSE,
     ];
 
-    // Test if connection is valid.
-    $status = NULL;
-    if ($config->get('enable_localist_sync')) {
-      $valid = $this->localistManager->checkEndpoint($config->get('localist_endpoint'));
-      if ($valid) {
-        $status = "<span title='Endpoint is returning data'> ✅</span>";
-      }
-      else {
-        $status = "<span title='Endpoint is not returning data'> ❌</span>";
-      }
-    }
-
     $form['localist_endpoint'] = [
       '#type' => 'url',
-      '#title' => $this->t('Localist endpoint base URL') . $status,
+      '#title' => $this->t('Localist endpoint base URL') . $this->localistManager->getLabelStatus('localist_endpoint'),
       '#description' => $this->t('Ex: https://calendar.example.edu'),
       '#default_value' => $config->get('localist_endpoint') ?: 'https://calendar.example.edu',
+      '#required' => TRUE,
     ];
 
     $form['groups'] = [
@@ -123,12 +112,9 @@ class LocalistSettings extends ConfigFormBase {
       '#description' => $this->t('This module only imports Localist events from a specific group.'),
     ];
 
-    $groupStatus = $this->localistManager->getMigrationStatus($config->get('localist_group_migration'));
-    kint($groupStatus);
-
     $form['groups']['localist_group_migration'] = [
       '#type' => 'textfield',
-      '#title' => $this->t('Group Migration'),
+      '#title' => $this->t('Group Migration') . $this->localistManager->getLabelStatus('localist_group_migration'),
       '#description' => $this->t('Machine name, i.e. localist_groups. See README.md on how to override with a custom group migration.'),
       '#default_value' => $config->get('localist_group_migration') ?: 'localist_groups',
       '#required' => TRUE,
@@ -146,7 +132,7 @@ class LocalistSettings extends ConfigFormBase {
         '#default_value' => $term ?: NULL,
         '#selection_handler' => 'default',
         '#selection_settings' => [
-          'target_bundles' => ['event_groups'],
+          'target_bundles' => ['localist_groups'],
         ],
         '#required' => TRUE,
       ];
@@ -181,30 +167,6 @@ class LocalistSettings extends ConfigFormBase {
   /**
    * {@inheritdoc}
    */
-  public function validateForm(array &$form, FormStateInterface $form_state) {
-    $enabled = $form_state->getValue('enable_localist_sync');
-    if ($enabled) {
-
-      $requiredFields = [
-        'localist_endpoint',
-      ];
-
-      foreach ($requiredFields as $field) {
-        if (!$form_state->getValue($field)) {
-          $form_state->setErrorByName(
-          $field,
-          $this->t("%required_field is required.", ['%required_field' => $form_state->getCompleteForm()[$field]['#title']->__toString()])
-          );
-        }
-      }
-
-    }
-
-  }
-
-  /**
-   * {@inheritdoc}
-   */
   public function submitForm(array &$form, FormStateInterface $form_state) {
     $config = $this->configFactory->getEditable('localist_drupal.settings');
 
@@ -212,6 +174,7 @@ class LocalistSettings extends ConfigFormBase {
     $config->set('enable_localist_sync', $form_state->getValue('enable_localist_sync'))
       ->set('localist_endpoint', rtrim($form_state->getValue('localist_endpoint'), "/"))
       ->set('localist_group', $form_state->getValue('localist_group'))
+      ->set('localist_group_migration', $form_state->getValue('localist_group_migration'))
       ->save();
 
     parent::submitForm($form, $form_state);

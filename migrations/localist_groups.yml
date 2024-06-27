@@ -6,7 +6,7 @@ source:
   data_parser_plugin: json
   track_changes: true
   urls:
-    # @see ys_localist.module
+    # @see localist_groups.module
     callback: localist_drupal_migrate_url
   localist_endpoint: 'groups'
   item_selector: groups
@@ -29,7 +29,7 @@ process:
 
 destination:
   plugin: 'entity:taxonomy_term'
-  default_bundle: event_groups
+  default_bundle: localist_groups
   overwrite_properties:
     - name
     - field_localist_group_id

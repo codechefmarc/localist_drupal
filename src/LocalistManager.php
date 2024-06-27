@@ -408,4 +408,33 @@ class LocalistManager extends ControllerBase implements ContainerInjectionInterf
     return $ticketData;
   }
 
+  public function getLabelStatus($field) {
+    switch ($field) {
+      case 'localist_endpoint':
+        $valid = $this->checkEndpoint($this->localistConfig->get($field));
+        $messageWorking = $this->t('Localist endpoint is returning data.');
+        $messageBroken = $this->t('Localist endpoint is not returning data. Check the endpoint URL and save configuration.');
+        break;
+      case 'localist_group_migration':
+        $valid = $this->getMigrationStatus($this->localistConfig->get($field)) !== NULL;
+        $messageWorking = $this->t('Group migration exists.');
+        $messageBroken = $this->t('Group migration does not appear to exist.');
+
+      default:
+        # code...
+        break;
+    }
+    // Test if connection is valid.
+    $status = NULL;
+    if ($this->localistConfig->get('enable_localist_sync')) {
+      if ($valid) {
+        $status = "<span title='$messageWorking'> ✅</span>";
+      }
+      else {
+        $status = "<span title='$messageBroken'> ❌</span>";
+      }
+    }
+    return $status;
+  }
+
 }

@@ -10,7 +10,6 @@
     ],
     "minimum-stability": "dev",
     "require": {
-      "cweagans/composer-patches": "^1.7",
       "drupal/migrate_plus": "^6.0",
       "drupal/migrate_tools": "^6.0",
       "drupal/calendar_link": "^3.0"

@@ -5,20 +5,16 @@ This repository contains code examples and documentation on how to integrate the
 
 - [Localist Integration with Drupal](#localist-integration-with-drupal)
     - [Table of Contents](#table-of-contents)
-    - [What This Repository Contains](#what-this-repository-contains)
     - [What is Localist?](#what-is-localist)
-    - [What This Module Does](#what-this-module-does)
+    - [What These Modules Do](#what-these-modules-do)
     - [Module Requirements](#module-requirements)
     - [Module Overview](#module-overview)
 
-### What This Repository Contains
-
-This repository has what looks like a full Drupal module, however it is not complete and cannot simply be installed and enabled. This is because there are specific decisions that need to be made first by site builders and developers. These decisions will be noted in this documentation. Then, a developer can use the decisions to set up Drupal fields and modify the code noted here to create a working migration.
 
 ### What is Localist?
 [Localist](https://www.localist.com) is an event management system that makes it easy to enter, find, view, and register for events for an organization. While Localist offers a very robust branded hosted solution for viewing, filtering, and finding events, they also have an API to be able to integrate these events on other platforms.
 
-### What This Module Does
+### What These Modules Do
 * Localist Drupal - Utilizes Drupal migrations to import events, groups, and taxonomy terms into Drupal. The module provides custom migration plugins and functions to aid with importing data from the Localist API. It also provides a basic group migration with an associated taxonomy vocabulary called Localist Groups.
 
 * Localist Examples (optional) - Creates a content type called Localist Event, associated example fields, and a taxonomy vocabulary for Places and associated migrations.

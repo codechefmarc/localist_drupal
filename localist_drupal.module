@@ -5,7 +5,37 @@
  * Primary module hooks for Localist module.
  */
 
+use Drupal\Core\Routing\RouteMatchInterface;
+use Drupal\Core\Url;
 use Drupal\migrate\Plugin\MigrationInterface;
+
+/**
+ * Implements hook_help().
+ */
+function localist_drupal_help($route_name, RouteMatchInterface $route_match) {
+  switch ($route_name) {
+    // Main module help for the block module.
+    case 'help.page.localist_drupal':
+      $variables = [
+        ':settings' => Url::fromRoute('localist_drupal.settings')->toString(),
+      ];
+
+      $output = '';
+      $output .= '<h3>' . t('About') . '</h3>';
+      $output .= '<p>' . t('Utilizes Drupal migrations to import events, groups, and taxonomy terms into Drupal. The module provides custom migration plugins and functions to aid with importing data from the Localist API. It also provides a basic group migration with an associated taxonomy vocabulary called Localist Groups. More information can be found in README.md.') . '</p>';
+      $output .= '<h3>' . t('Usage') . '</h3>';
+      $output .= '<ol>';
+      $output .= '<li>' . t('<a href=":settings">Visit the Localist settings page</a> to get started.', $variables) . '</li>';
+      $output .= '<li>' . t('To start syncing, first check the box next to Enable Localist sync.') . '</li>';
+      $output .= '<li>' . t('Enter in the Localist endpoint base URL for your organization. You can get this from visiting your Localist home page or by asking your Localist rep.') . '</li>';
+      $output .= '<li>' . t('Leave the rest of the settings alone for the moment, and click Save Configuration at the bottom.') . '</li>';
+      $output .= '<li>' . t('Once the form refreshes, a green checkmark next to the Endpoint URL means the connection to Localist was made successfully.') . '</li>';
+      $output .= '</ol>';
+
+      return $output;
+
+  }
+}
 
 /**
  * Returns dynamic URLs for Localist event migrations.

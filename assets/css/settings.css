@@ -1,0 +1,9 @@
+.localist-status li {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.localist-status svg {
+  width: 1.5rem;
+  height: 1.5rem;
+}

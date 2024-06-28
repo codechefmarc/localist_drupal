@@ -6,6 +6,7 @@ use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Form\ConfigFormBase;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Url;
 use Drupal\localist_drupal\LocalistManager;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
@@ -78,18 +79,11 @@ class LocalistSettings extends ConfigFormBase {
    */
   public function buildForm(array $form, FormStateInterface $form_state) {
     $config = $this->config('localist_drupal.settings');
+    $localistEnabled = $config->get('enable_localist_sync');
+    $endpointValid = $this->localistManager->checkEndpoint();
+    $groupMigrationExists = $this->localistManager->getMigrationStatus($config->get('localist_group_migration')) !== NULL;
     $groupsImported = $this->localistManager->getMigrationStatus('localist_groups') > 0;
-
-    if (
-      $config->get('enable_localist_sync') &&
-      $config->get('localist_group') &&
-      $groupsImported
-      ) {
-      $form['sync_now_button'] = [
-        '#type' => 'markup',
-        '#markup' => '<a class="button" href="/admin/localist/sync">Sync now</a>',
-      ];
-    }
+    $localistGroup = $this->localistManager->getGroupTaxonomyEntity();
 
     $form['enable_localist_sync'] = [
       '#type' => 'checkbox',
@@ -98,10 +92,37 @@ class LocalistSettings extends ConfigFormBase {
       '#default_value' => $config->get('enable_localist_sync') ?: FALSE,
     ];
 
+    if ($localistEnabled) {
+
+      $form['status'] = [
+        '#type' => 'inline_template',
+        '#template' =>
+        "<h2>" . $this->t('Status') . "</h2>
+        <ul class='localist-status'>
+          <li>" . $this->localistManager->getLabelStatus('localist_endpoint') . $this->t('Localist endpoint') . "</li>
+          <li>" . $this->localistManager->getLabelStatus('localist_group_migration') . $this->t('Group migration exists') . "</li>
+          <li>" . $this->localistManager->getLabelStatus('localist_group_imported') . $this->t('Groups imported') . "</li>
+          <li>" . $this->localistManager->getLabelStatus('localist_group') . $this->t('Group selected') . "</li>
+        </ul>",
+      ];
+    }
+
+    if (
+      $localistEnabled &&
+      $localistGroup &&
+      $groupsImported
+      ) {
+      $form['sync_now_button'] = [
+        '#type' => 'markup',
+        '#markup' => '<a class="button" href="/admin/localist/sync">Sync now</a>',
+      ];
+    }
+
     $form['localist_endpoint'] = [
       '#type' => 'url',
-      '#title' => $this->t('Localist endpoint base URL') . $this->localistManager->getLabelStatus('localist_endpoint'),
+      '#title' => $this->t('Localist endpoint base URL'),
       '#description' => $this->t('Ex: https://calendar.example.edu'),
+      '#allowed_tags' => ['span', 'svg', 'path'],
       '#default_value' => $config->get('localist_endpoint') ?: 'https://calendar.example.edu',
       '#required' => TRUE,
     ];
@@ -110,18 +131,19 @@ class LocalistSettings extends ConfigFormBase {
       '#type' => 'fieldset',
       '#title' => $this->t('Localist Group'),
       '#description' => $this->t('This module only imports Localist events from a specific group.'),
+      '#disabled' => !$localistEnabled,
     ];
 
     $form['groups']['localist_group_migration'] = [
       '#type' => 'textfield',
-      '#title' => $this->t('Group Migration') . $this->localistManager->getLabelStatus('localist_group_migration'),
+      '#title' => $this->t('Group Migration'),
       '#description' => $this->t('Machine name, i.e. localist_groups. See README.md on how to override with a custom group migration.'),
       '#default_value' => $config->get('localist_group_migration') ?: 'localist_groups',
       '#required' => TRUE,
     ];
 
     // Only show the group picker if the group migration has been run.
-    if ($config->get('enable_localist_sync') && $groupsImported) {
+    if ($localistEnabled && $groupsImported && $endpointValid) {
       $term = $config->get('localist_group') ? $this->entityTypeManager->getStorage('taxonomy_term')->load($config->get('localist_group')) : NULL;
 
       $form['groups']['localist_group'] = [
@@ -137,29 +159,34 @@ class LocalistSettings extends ConfigFormBase {
         '#required' => TRUE,
       ];
     }
-    elseif ($config->get('enable_localist_sync') && !$groupsImported) {
-
+    elseif ($localistEnabled && $endpointValid && !$groupsImported && $groupMigrationExists) {
+      $syncGroupsUrl = Url::fromRoute('localist_drupal.sync_groups')->toString();
       $form['groups']['no_group_sync_message'] = [
         '#type' => 'markup',
-        '#markup' => '
-          <p>Groups have not yet created. A selected group is required before synchronizing events.</p>
-          <a class="button" href="/admin/localist/sync-groups">Create Groups</a>',
+        '#markup' => "<p>" . $this->t('Groups have not yet created. A selected group is required before synchronizing events.') . "</p>" .
+        "<a class='button' href='$syncGroupsUrl'>" . $this->t('Create Groups') . "</a>",
       ];
     }
+
+    $dependencyMigrations = $config->get('localist_dependency_migrations') ? implode("\n", $config->get('localist_dependency_migrations')) : NULL;
 
     $form['localist_dependency_migrations'] = [
       '#type' => 'textarea',
       '#title' => $this->t('Dependency Migrations'),
-      '#default_value' => $config->get('localist_dependency_migrations') ?: NULL,
+      '#default_value' => $dependencyMigrations,
       '#description' => $this->t("Specify dependency migrations to run by machine name. Enter one migration per line. Ex: localist_places. See README.md on how to create additional migrations."),
+      '#disabled' => !$localistEnabled,
     ];
 
     $form['localist_event_migration'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Event Migration'),
-      '#description' => $this->t('Machine name, i.e. localist_events. This is the main migration of events and comes after the dependency migrations such as taxonomy term creation.'),
+      '#description' => $this->t('Machine name, i.e. localist_events. This is the main migration of events and comes after the dependency migrations.'),
       '#default_value' => $config->get('localist_event_migration') ?: NULL,
+      '#disabled' => !$localistEnabled,
     ];
+
+    $form['#attached']['library'][] = 'localist_drupal/settings';
 
     return parent::buildForm($form, $form_state);
   }
@@ -175,6 +202,8 @@ class LocalistSettings extends ConfigFormBase {
       ->set('localist_endpoint', rtrim($form_state->getValue('localist_endpoint'), "/"))
       ->set('localist_group', $form_state->getValue('localist_group'))
       ->set('localist_group_migration', $form_state->getValue('localist_group_migration'))
+      ->set('localist_dependency_migrations', array_map('trim', explode("\n", $form_state->getValue('localist_dependency_migrations'))))
+      ->set('localist_event_migration', $form_state->getValue('localist_event_migration'))
       ->save();
 
     parent::submitForm($form, $form_state);

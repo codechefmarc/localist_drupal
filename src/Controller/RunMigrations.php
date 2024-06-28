@@ -93,7 +93,7 @@ class RunMigrations extends ControllerBase implements ContainerInjectionInterfac
 
     if ($this->localistConfig->get('enable_localist_sync')) {
       // Check endpoint before running migration.
-      if ($this->localistManager->checkGroupsEndpoint()) {
+      if ($this->localistManager->checkEndpoint()) {
         $this->localistManager->runMigration('localist_groups');
         $this->localistManager->removeOldExperiences();
         $this->messenger()->addStatus('Successfully imported Localist groups.');

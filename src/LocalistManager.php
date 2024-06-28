@@ -222,7 +222,7 @@ class LocalistManager extends ControllerBase implements ContainerInjectionInterf
    * @return array
    *   Endpoint URLs with pages attached.
    */
-  private function getGroupTaxonomyEntity() {
+  public function getGroupTaxonomyEntity() {
     $groupId = NULL;
     $groupTermId = $this->localistConfig->get('localist_group');
     if ($groupTermId) {
@@ -319,31 +319,10 @@ class LocalistManager extends ControllerBase implements ContainerInjectionInterf
   /**
    * Checks the Localist endpoint to make sure we are receiving a JSON feed.
    */
-  public function checkEndpoint($endpointUrl) {
+  public function checkEndpoint() {
     $returnVal = FALSE;
     if ($endpoint = $this->localistConfig->get('localist_endpoint')) {
       $endpointUrl = $endpoint . "/api/2/events";
-      try {
-        $response = $this->httpClient->get($endpointUrl);
-        $returnVal = str_contains($response->getHeader("Content-Type")[0], 'json') ? TRUE : FALSE;
-      }
-      catch (\Throwable $th) {
-
-      }
-
-    }
-
-    return $returnVal;
-
-  }
-
-  /**
-   * Checks the group endpoint to make sure we are receiving a JSON feed.
-   */
-  public function checkGroupsEndpoint() {
-    $returnVal = FALSE;
-    if ($endpoint = $this->localistConfig->get('localist_endpoint')) {
-      $endpointUrl = $endpoint . "/api/2/groups";
       try {
         $response = $this->httpClient->get($endpointUrl);
         $returnVal = str_contains($response->getHeader("Content-Type")[0], 'json') ? TRUE : FALSE;
@@ -408,17 +387,43 @@ class LocalistManager extends ControllerBase implements ContainerInjectionInterf
     return $ticketData;
   }
 
+  private function getSvg($filename) {
+    $modulePath = $this->moduleHandler->getModule('localist_drupal')->getPath();
+    $svgPath = $modulePath . "/assets/icons/$filename";
+    if (file_exists($svgPath)) {
+      $svgContent = file_get_contents($svgPath);
+      return $svgContent;
+    }
+    else {
+      return $this->t('SVG file not found.');
+    }
+  }
+
   public function getLabelStatus($field) {
     switch ($field) {
       case 'localist_endpoint':
-        $valid = $this->checkEndpoint($this->localistConfig->get($field));
+        $valid = $this->checkEndpoint();
         $messageWorking = $this->t('Localist endpoint is returning data.');
         $messageBroken = $this->t('Localist endpoint is not returning data. Check the endpoint URL and save configuration.');
         break;
+
       case 'localist_group_migration':
         $valid = $this->getMigrationStatus($this->localistConfig->get($field)) !== NULL;
         $messageWorking = $this->t('Group migration exists.');
         $messageBroken = $this->t('Group migration does not appear to exist.');
+        break;
+
+      case 'localist_group':
+        $valid = $this->getGroupTaxonomyEntity();
+        $messageWorking = $this->t('Group has been selected.');
+        $messageBroken = $this->t('Group has not been selected.');
+        break;
+
+      case 'localist_group_imported':
+        $valid = $this->getMigrationStatus($this->localistConfig->get('localist_group_migration')) > 0;
+        $messageWorking = $this->t('Groups have been imported.');
+        $messageBroken = $this->t('Groups have not been imported.');
+        break;
 
       default:
         # code...
@@ -428,10 +433,12 @@ class LocalistManager extends ControllerBase implements ContainerInjectionInterf
     $status = NULL;
     if ($this->localistConfig->get('enable_localist_sync')) {
       if ($valid) {
-        $status = "<span title='$messageWorking'> ✅</span>";
+        $svg = $this->getSvg('circle-check.svg');
+        $status = "<span title='$messageWorking'>$svg</span>";
       }
       else {
-        $status = "<span title='$messageBroken'> ❌</span>";
+        $svg = $this->getSvg('circle-xmark.svg');
+        $status = "<span title='$messageBroken'>$svg</span>";
       }
     }
     return $status;

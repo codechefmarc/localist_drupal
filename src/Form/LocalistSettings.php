@@ -81,8 +81,8 @@ class LocalistSettings extends ConfigFormBase {
     $config = $this->config('localist_drupal.settings');
     $localistEnabled = $config->get('enable_localist_sync');
     $endpointValid = $this->localistManager->checkEndpoint();
-    $groupMigrationExists = $this->localistManager->getMigrationStatus($config->get('localist_group_migration')) !== [];
-    $groupsImported = $this->localistManager->getMigrationStatus('localist_groups')['imported'] > 0;
+    $groupMigrationExists = !empty($this->localistManager->getMigrationStatus($config->get('localist_group_migration')));
+    $groupsImported = $groupMigrationExists ? $this->localistManager->getMigrationStatus($config->get('localist_group_migration'))['imported'] > 0 : FALSE;
     $localistGroup = $this->localistManager->getGroupTaxonomyEntity();
 
     $form['enable_localist_sync'] = [
@@ -114,7 +114,8 @@ class LocalistSettings extends ConfigFormBase {
     if (
       $localistEnabled &&
       $localistGroup &&
-      $groupsImported
+      $groupsImported &&
+      $groupMigrationExists
       ) {
       $form['sync_now_button'] = [
         '#type' => 'markup',

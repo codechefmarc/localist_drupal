@@ -28,13 +28,30 @@ function localist_drupal_help($route_name, RouteMatchInterface $route_match) {
       $output .= '<li>' . t('<a href=":settings">Visit the Localist settings page</a> to get started.', $variables) . '</li>';
       $output .= '<li>' . t('To start syncing, first check the box next to Enable Localist sync.') . '</li>';
       $output .= '<li>' . t('Enter in the Localist endpoint base URL for your organization. You can get this from visiting your Localist home page or by asking your Localist rep.') . '</li>';
-      $output .= '<li>' . t('Leave the rest of the settings alone for the moment, and click Save Configuration at the bottom.') . '</li>';
-      $output .= '<li>' . t('Once the form refreshes, a green checkmark next to the Endpoint URL means the connection to Localist was made successfully.') . '</li>';
+      $output .= '<li>' . t('Click Save Configuration at the bottom.') . '</li>';
+      $output .= '<li>' . t('Once the form refreshes, check the new Status section at the top. If the endpoint works, a green checkmark will appear next to Localist Endpoint.') . '</li>';
       $output .= '</ol>';
 
       return $output;
 
   }
+}
+
+/**
+ * Implements hook_theme().
+ */
+function localist_drupal_theme($existing, $type, $theme, $path) {
+  return [
+    'localist_status' => [
+      'variables' => [
+        'endpoint_status' => NULL,
+        'group_migration_status' => [],
+        'group_selected' => NULL,
+        'svg_check' => NULL,
+        'svg_xmark' => NULL,
+      ],
+    ],
+  ];
 }
 
 /**

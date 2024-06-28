@@ -5,6 +5,7 @@ namespace Drupal\localist_drupal;
 use Drupal\Component\Datetime\TimeInterface;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Controller\ControllerBase;
+use Drupal\Core\Database\Connection;
 use Drupal\Core\DependencyInjection\ContainerInjectionInterface;
 use Drupal\Core\Entity\EntityTypeManager;
 use Drupal\Core\Extension\ModuleHandler;
@@ -92,6 +93,13 @@ class LocalistManager extends ControllerBase implements ContainerInjectionInterf
   protected $messenger;
 
   /**
+   * Drupal Database Connection.
+   *
+   * @var \Drupal\Core\Database\Connection
+   */
+  protected $database;
+
+  /**
    * Constructs a new LocalistManager object.
    */
   public function __construct(
@@ -102,6 +110,7 @@ class LocalistManager extends ControllerBase implements ContainerInjectionInterf
     ModuleHandler $module_handler,
     TimeInterface $time,
     MessengerInterface $messenger,
+    Connection $database,
   ) {
     $this->localistConfig = $config_factory->get('localist_drupal.settings');
     $this->endpointBase = $this->localistConfig->get('localist_endpoint');
@@ -111,6 +120,7 @@ class LocalistManager extends ControllerBase implements ContainerInjectionInterf
     $this->moduleHandler = $module_handler;
     $this->time = $time;
     $this->messenger = $messenger;
+    $this->database = $database;
   }
 
   /**
@@ -125,6 +135,7 @@ class LocalistManager extends ControllerBase implements ContainerInjectionInterf
       $container->get('module_handler'),
       $container->get('datetime.time'),
       $container->get('messenger'),
+      $container->get('database'),
     );
   }
 
@@ -244,7 +255,8 @@ class LocalistManager extends ControllerBase implements ContainerInjectionInterf
       foreach (self::LOCALIST_MIGRATIONS as $migration) {
         $this->runMigration($migration);
         $messageData[$migration] = [
-          'imported' => $this->getMigrationStatus($migration),
+          'imported' => $this->getMigrationStatus($migration)['imported'],
+          'last_imported' => $this->getMigrationStatus($migration)['last_imported'],
         ];
       }
       return $messageData;
@@ -302,18 +314,44 @@ class LocalistManager extends ControllerBase implements ContainerInjectionInterf
   /**
    * Gets the migration status such as number of items imported.
    *
-   * @return null|int
-   *   For now, just the number of items imported.
+   * @return null|array
+   *   Array is imported count and last imported timestamp.
    */
   public function getMigrationStatus($migration_id) {
     $migration = $this->migrationManager->createInstance($migration_id);
     if (!$migration) {
-      return NULL;
+      return [];
     }
     $map = $migration->getIdMap();
-    $imported = $map->importedCount();
-    return $imported;
+    $status = [
+      'imported' => $map->importedCount(),
+      'last_imported' => $this->timeAgo($this->getLastImportedTimestamp($migration_id)),
+    ];
+    return $status;
 
+  }
+
+  private function getLastImportedTimestamp($migration_id) {
+    $migration = $this->migrationManager->createInstance($migration_id);
+
+    if ($migration instanceof MigrationInterface) {
+      // Get the migrate map table name.
+      $map_table = 'migrate_map_' . $migration->id();
+
+      // Query the migrate map table for the last imported timestamp.
+      $query = $this->database->select($map_table, 'm')
+        ->fields('m', ['last_imported'])
+        ->orderBy('last_imported', 'DESC')
+        ->range(0, 1);
+
+      $result = $query->execute()->fetchField();
+
+      if ($result) {
+        return $result;
+      }
+    }
+
+    return NULL;
   }
 
   /**
@@ -387,61 +425,40 @@ class LocalistManager extends ControllerBase implements ContainerInjectionInterf
     return $ticketData;
   }
 
-  private function getSvg($filename) {
+  public function getSvg($filename) {
     $modulePath = $this->moduleHandler->getModule('localist_drupal')->getPath();
     $svgPath = $modulePath . "/assets/icons/$filename";
     if (file_exists($svgPath)) {
-      $svgContent = file_get_contents($svgPath);
-      return $svgContent;
+      return $svgPath;
     }
     else {
       return $this->t('SVG file not found.');
     }
   }
 
-  public function getLabelStatus($field) {
-    switch ($field) {
-      case 'localist_endpoint':
-        $valid = $this->checkEndpoint();
-        $messageWorking = $this->t('Localist endpoint is returning data.');
-        $messageBroken = $this->t('Localist endpoint is not returning data. Check the endpoint URL and save configuration.');
-        break;
+  private function timeAgo($timestamp) {
+    $time_difference = time() - $timestamp;
 
-      case 'localist_group_migration':
-        $valid = $this->getMigrationStatus($this->localistConfig->get($field)) !== NULL;
-        $messageWorking = $this->t('Group migration exists.');
-        $messageBroken = $this->t('Group migration does not appear to exist.');
-        break;
-
-      case 'localist_group':
-        $valid = $this->getGroupTaxonomyEntity();
-        $messageWorking = $this->t('Group has been selected.');
-        $messageBroken = $this->t('Group has not been selected.');
-        break;
-
-      case 'localist_group_imported':
-        $valid = $this->getMigrationStatus($this->localistConfig->get('localist_group_migration')) > 0;
-        $messageWorking = $this->t('Groups have been imported.');
-        $messageBroken = $this->t('Groups have not been imported.');
-        break;
-
-      default:
-        # code...
-        break;
+    if ($time_difference < 1 ) {
+        return 'less than 1 second ago';
     }
-    // Test if connection is valid.
-    $status = NULL;
-    if ($this->localistConfig->get('enable_localist_sync')) {
-      if ($valid) {
-        $svg = $this->getSvg('circle-check.svg');
-        $status = "<span title='$messageWorking'>$svg</span>";
-      }
-      else {
-        $svg = $this->getSvg('circle-xmark.svg');
-        $status = "<span title='$messageBroken'>$svg</span>";
-      }
+    $condition = array( 12 * 30 * 24 * 60 * 60 =>  'year',
+                30 * 24 * 60 * 60       =>  'month',
+                24 * 60 * 60            =>  'day',
+                60 * 60                 =>  'hour',
+                60                      =>  'minute',
+                1                       =>  'second'
+    );
+
+    foreach ($condition as $secs => $str) {
+        $d = $time_difference / $secs;
+
+        if ($d >= 1) {
+            $t = round($d);
+            return $t . ' ' . $str . ( $t > 1 ? 's' : '' ) . ' ago';
+        }
     }
-    return $status;
-  }
+}
 
 }
+

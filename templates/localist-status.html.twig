@@ -1,0 +1,45 @@
+{{ attach_library('localist_drupal/settings') }}
+<h2>Status</h2>
+
+<ul class="localist-status">
+  <li>
+    {% if endpoint_status %}
+      {% include svg_check %}
+      Localist endpoint
+    {% else %}
+      {% include svg_xmark %}
+      Localist endpoint is not returning data. Check the endpoint URL and save configuration.
+    {% endif %}
+  </li>
+
+  <li>
+    {% if group_migration_status %}
+      {% include svg_check %}
+      Group migration
+    {% else %}
+      {% include svg_xmark %}
+      Group migration does not appear to exist. See the README.md for how to create a group migration. Default migration is <code>localist_groups</code>
+    {% endif %}
+  </li>
+
+  <li>
+    {% if group_migration_status.imported > 0 %}
+      {% include svg_check %}
+      Localist groups imported ({{ group_migration_status.imported }} groups, {{ group_migration_status.last_imported }})
+    {% else %}
+      {% include svg_xmark %}
+      Localist groups have not been imported. Click "Create Groups" to import groups.
+    {% endif %}
+  </li>
+
+  <li>
+    {% if group_selected %}
+      {% include svg_check %}
+      Localist group selected
+    {% else %}
+      {% include svg_xmark %}
+      Localist group has not been selected. Please select one and save configuration.
+    {% endif %}
+
+  </li>
+</ul>

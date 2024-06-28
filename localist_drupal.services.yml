@@ -2,7 +2,7 @@ services:
   # Service for interacting with Localist sync and configuration.
   localist_drupal.manager:
     class: Drupal\localist_drupal\LocalistManager
-    arguments: ['@config.factory', '@http_client', '@entity_type.manager', '@plugin.manager.migration', '@module_handler', '@datetime.time', '@messenger']
+    arguments: ['@config.factory', '@http_client', '@entity_type.manager', '@plugin.manager.migration', '@module_handler', '@datetime.time', '@messenger', '@database']
   # Service for retrieving event field data.
   localist_drupal.meta_fields_manager:
     class: Drupal\localist_drupal\MetaFieldsManager

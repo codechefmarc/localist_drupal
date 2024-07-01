@@ -113,12 +113,7 @@ class LocalistSettings extends ConfigFormBase {
       ];
     }
 
-    if (
-      $localistEnabled &&
-      $localistGroup &&
-      $groupsImported &&
-      !empty($groupMigrationExists)
-      ) {
+    if ($this->localistManager->preflightChecks()) {
       $syncUrl = Url::fromRoute('localist_drupal.run_migrations')->toString();
       $form['sync_now_button'] = [
         '#type' => 'markup',

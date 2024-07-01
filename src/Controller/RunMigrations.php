@@ -7,7 +7,7 @@ use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\DependencyInjection\ContainerInjectionInterface;
 use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\Core\Url;
-use Drupal\localist_drupal\LocalistManager;
+use Drupal\localist_drupal\Service\LocalistManager;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 
@@ -69,11 +69,17 @@ class RunMigrations extends ControllerBase implements ContainerInjectionInterfac
     if ($this->localistManager->preflightChecks()) {
 
       $messageData = $this->localistManager->runAllMigrations();
-      dpm($messageData);
-      if (isset($messageData['localist_events'])) {
-        $eventsImported = $messageData['localist_events']['imported'];
-        $message = "Synchronized $eventsImported events.";
-        $this->messenger()->addStatus($message);
+      if ($messageData) {
+        foreach ($messageData['migrations'] as $migration => $message) {
+          $eventsImported = $message['imported'];
+          $message = "Synchronized $eventsImported items from $migration.";
+          $this->messenger()->addStatus($message);
+        }
+        // Not found migrations.
+        if (isset($messageData['not_found'])) {
+          $notFoundMessage = implode(", ", $messageData['not_found']);
+          $this->messenger()->addError("The following migrations were not found and therefore not included in the sync: <code>$notFoundMessage</code>");
+        }
       }
     }
     else {

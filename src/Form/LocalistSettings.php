@@ -7,7 +7,7 @@ use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Form\ConfigFormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Url;
-use Drupal\localist_drupal\LocalistManager;
+use Drupal\localist_drupal\Service\LocalistManager;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**

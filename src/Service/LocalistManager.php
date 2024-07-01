@@ -1,11 +1,12 @@
 <?php
 
-namespace Drupal\localist_drupal;
+namespace Drupal\localist_drupal\Service;
 
 use Drupal\Component\Datetime\TimeInterface;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\Database\Connection;
+use Drupal\Core\Datetime\DateFormatter;
 use Drupal\Core\DependencyInjection\ContainerInjectionInterface;
 use Drupal\Core\Entity\EntityFieldManager;
 use Drupal\Core\Entity\EntityTypeManager;
@@ -94,6 +95,13 @@ class LocalistManager extends ControllerBase implements ContainerInjectionInterf
   protected $entityFieldManager;
 
   /**
+   * The date formatter service.
+   *
+   * @var \Drupal\Core\Datetime\DateFormatter
+   */
+  protected $dateFormatter;
+
+  /**
    * Group vocabulary and field name are required for group sync.
    */
 
@@ -113,6 +121,7 @@ class LocalistManager extends ControllerBase implements ContainerInjectionInterf
     MessengerInterface $messenger,
     Connection $database,
     EntityFieldManager $entity_field_manager,
+    DateFormatter $date_formatter,
   ) {
     $this->localistConfig = $config_factory->get('localist_drupal.settings');
     $this->endpointBase = $this->localistConfig->get('localist_endpoint');
@@ -124,6 +133,7 @@ class LocalistManager extends ControllerBase implements ContainerInjectionInterf
     $this->messenger = $messenger;
     $this->database = $database;
     $this->entityFieldManager = $entity_field_manager;
+    $this->dateFormatter = $date_formatter;
   }
 
   /**
@@ -140,6 +150,7 @@ class LocalistManager extends ControllerBase implements ContainerInjectionInterf
       $container->get('messenger'),
       $container->get('database'),
       $container->get('entity_field.manager'),
+      $container->get('date.formatter'),
     );
   }
 
@@ -259,13 +270,19 @@ class LocalistManager extends ControllerBase implements ContainerInjectionInterf
   public function runAllMigrations() {
     if ($this->preflightChecks()) {
       $migrationsToRun = $this->getMigrationsToRun();
-      foreach ($migrationsToRun as $migration) {
+      foreach ($migrationsToRun['found'] as $migration) {
         $this->runMigration($migration);
-        $messageData[$migration] = [
+        $messageData['migrations'][$migration] = [
           'imported' => $this->getMigrationStatus($migration)['imported'],
           'last_imported' => $this->getMigrationStatus($migration)['last_imported'],
         ];
       }
+      if (isset($migrationsToRun['not_found'])) {
+        foreach ($migrationsToRun['not_found'] as $notFound) {
+          $messageData['not_found'][] = $notFound;
+        }
+      }
+
       return $messageData;
     }
     else {
@@ -323,37 +340,30 @@ class LocalistManager extends ControllerBase implements ContainerInjectionInterf
    */
   private function getMigrationsToRun() {
     $migrations = [];
-    $migrationsNotFound = [];
     // Get the group migration.
     $groupMigration = $this->localistConfig->get('localist_group_migration');
     if ($this->getMigrationStatus($groupMigration)) {
-      $migrations[] = $groupMigration;
+      $migrations['found'][] = $groupMigration;
     }
 
     // Get the dependency migrations.
     $dependencyMigrations = $this->localistConfig->get('localist_dependency_migrations');
     foreach ($dependencyMigrations as $depMigration) {
       if ($this->getMigrationStatus($depMigration)) {
-        $migrations[] = $depMigration;
+        $migrations['found'][] = $depMigration;
       }
-      else {
-        $migrationsNotFound[] = $depMigration;
+      elseif ($depMigration) {
+        $migrations['not_found'][] = $depMigration;
       }
     }
 
     // Get the events migration.
     $eventsMigration = $this->localistConfig->get('localist_event_migration');
     if ($this->getMigrationStatus($eventsMigration)) {
-      $migrations[] = $eventsMigration;
+      $migrations['found'][] = $eventsMigration;
     }
-    else {
-      $migrationsNotFound[] = $eventsMigration;
-    }
-
-    // Messaging for not found migrations.
-    if (!empty($migrationsNotFound)) {
-      $notFoundMessage = implode(", ", $migrationsNotFound);
-      $this->messenger()->addError("The following migrations were not found and therefore not included in the sync: <code>$notFoundMessage</code>");
+    elseif ($eventsMigration) {
+      $migrations['not_found'][] = $eventsMigration;
     }
 
     return $migrations;
@@ -373,7 +383,7 @@ class LocalistManager extends ControllerBase implements ContainerInjectionInterf
     $map = $migration->getIdMap();
     $status = [
       'imported' => $map->importedCount(),
-      'last_imported' => $this->timeAgo($this->getLastImportedTimestamp($migration_id)),
+      'last_imported' => $this->dateFormatter->formatTimeDiffSince($this->getLastImportedTimestamp($migration_id)) . " ago",
     ];
     return $status;
 
@@ -509,35 +519,7 @@ class LocalistManager extends ControllerBase implements ContainerInjectionInterf
       return $svgPath;
     }
     else {
-      return $this->t('SVG file not found.');
-    }
-  }
-
-  /**
-   * Gets a formatted time-ago given a timestamp.
-   */
-  private function timeAgo($timestamp) {
-    $time_difference = time() - $timestamp;
-
-    if ($time_difference < 1) {
-      return 'less than 1 second ago';
-    }
-    $condition = [
-      12 * 30 * 24 * 60 * 60 => 'year',
-      30 * 24 * 60 * 60      => 'month',
-      24 * 60 * 60           => 'day',
-      60 * 60                => 'hour',
-      60                     => 'minute',
-      1                      => 'second',
-    ];
-
-    foreach ($condition as $secs => $str) {
-      $d = $time_difference / $secs;
-
-      if ($d >= 1) {
-        $t = round($d);
-        return $t . ' ' . $str . ($t > 1 ? 's' : '') . ' ago';
-      }
+      return $this->t(":filename file not found.", [':filename' => $filename]);
     }
   }
 

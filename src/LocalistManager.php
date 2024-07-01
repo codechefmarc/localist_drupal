@@ -24,20 +24,6 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 class LocalistManager extends ControllerBase implements ContainerInjectionInterface {
 
   /**
-   * List of migrations to run. Place migrations from first to last.
-   */
-  const LOCALIST_MIGRATIONS = [
-    'localist_event_types',
-    'localist_audience',
-    'localist_topics',
-    'localist_experiences',
-    'localist_groups',
-    'localist_places',
-    'localist_status',
-    'localist_events',
-  ];
-
-  /**
    * Configuration Factory.
    *
    * @var \Drupal\Core\Config\ConfigFactoryInterface
@@ -106,6 +92,13 @@ class LocalistManager extends ControllerBase implements ContainerInjectionInterf
    * @var \Drupal\Core\Entity\EntityFieldManager
    */
   protected $entityFieldManager;
+
+  /**
+   * Group vocabulary and field name are required for group sync.
+   */
+
+  const GROUP_VOCABULARY = 'localist_groups';
+  const GROUP_ID_FIELD = 'field_localist_group_id';
 
   /**
    * Constructs a new LocalistManager object.
@@ -245,14 +238,16 @@ class LocalistManager extends ControllerBase implements ContainerInjectionInterf
    *   Endpoint URLs with pages attached.
    */
   public function getGroupTaxonomyEntity() {
-    $groupId = NULL;
     $groupTermId = $this->localistConfig->get('localist_group');
     if ($groupTermId) {
+      /** @var Drupal\taxonomy\Entity\Term $term */
       $term = $this->entityTypeManager->getStorage('taxonomy_term')->load($groupTermId);
-      $groupId = ($term) ? $term->field_localist_group_id->value : NULL;
+      if ($term && $term->hasField('field_localist_group_id')) {
+        return $term->field_localist_group_id->value;
+      }
     }
 
-    return $groupId;
+    return NULL;
   }
 
   /**
@@ -262,8 +257,9 @@ class LocalistManager extends ControllerBase implements ContainerInjectionInterf
    *   Array of status of all migrations run.
    */
   public function runAllMigrations() {
-    if ($this->getEndpointUrls('events')) {
-      foreach (self::LOCALIST_MIGRATIONS as $migration) {
+    if ($this->preflightChecks()) {
+      $migrationsToRun = $this->getMigrationsToRun();
+      foreach ($migrationsToRun as $migration) {
         $this->runMigration($migration);
         $messageData[$migration] = [
           'imported' => $this->getMigrationStatus($migration)['imported'],
@@ -273,7 +269,7 @@ class LocalistManager extends ControllerBase implements ContainerInjectionInterf
       return $messageData;
     }
     else {
-      $this->messenger()->addError('Localist endpoint not configured correctly. No events imported.');
+      $this->messenger()->addError('One of the preflight checks failed. Check the Preflight Check status on the settings form.');
     }
 
   }
@@ -323,9 +319,50 @@ class LocalistManager extends ControllerBase implements ContainerInjectionInterf
   }
 
   /**
+   * Returns an array of pre-checked migrations.
+   */
+  private function getMigrationsToRun() {
+    $migrations = [];
+    $migrationsNotFound = [];
+    // Get the group migration.
+    $groupMigration = $this->localistConfig->get('localist_group_migration');
+    if ($this->getMigrationStatus($groupMigration)) {
+      $migrations[] = $groupMigration;
+    }
+
+    // Get the dependency migrations.
+    $dependencyMigrations = $this->localistConfig->get('localist_dependency_migrations');
+    foreach ($dependencyMigrations as $depMigration) {
+      if ($this->getMigrationStatus($depMigration)) {
+        $migrations[] = $depMigration;
+      }
+      else {
+        $migrationsNotFound[] = $depMigration;
+      }
+    }
+
+    // Get the events migration.
+    $eventsMigration = $this->localistConfig->get('localist_event_migration');
+    if ($this->getMigrationStatus($eventsMigration)) {
+      $migrations[] = $eventsMigration;
+    }
+    else {
+      $migrationsNotFound[] = $eventsMigration;
+    }
+
+    // Messaging for not found migrations.
+    if (!empty($migrationsNotFound)) {
+      $notFoundMessage = implode(", ", $migrationsNotFound);
+      $this->messenger()->addError("The following migrations were not found and therefore not included in the sync: <code>$notFoundMessage</code>");
+    }
+
+    return $migrations;
+  }
+
+  /**
    * Gets the migration status such as number of items imported.
    *
-   * @return null|array
+   * @return array
    *   Array is imported count and last imported timestamp.
    */
   public function getMigrationStatus($migration_id) {
@@ -340,6 +377,29 @@ class LocalistManager extends ControllerBase implements ContainerInjectionInterf
     ];
     return $status;
 
+  }
+
+  /**
+   * Performs all preflight checks for other functions to proceed.
+   */
+  public function preflightChecks() {
+    if (
+      // Localist sync enabled.
+      $this->localistConfig->get('enable_localist_sync') &&
+      // Endpoint is returning JSON data.
+      $this->checkEndpoint() &&
+      // Check group migration config file exists.
+      $this->getMigrationStatus($this->localistConfig->get('localist_group_migration')) &&
+      // Check group taxonomy vocabulary and ID field.
+      $this->checkGroupTaxonomy() &&
+      // Check that groups have been imported.
+      $this->getMigrationStatus($this->localistConfig->get('localist_group_migration'))['imported'] > 0 &&
+      // Check we have a group ID to send to Localist.
+      $this->getGroupTaxonomyEntity()
+    ) {
+      return TRUE;
+    }
+    return FALSE;
   }
 
   /**
@@ -392,34 +452,22 @@ class LocalistManager extends ControllerBase implements ContainerInjectionInterf
   /**
    * Status of the group vocabulary which are required for the group  migration.
    */
-  public function groupIdFieldExists() {
-    $fieldName = 'field_localist_group_id';
+  public function checkGroupTaxonomy() {
     // Get the storage for taxonomy vocabularies.
     $vocabularies = $this->entityTypeManager()->getStorage('taxonomy_vocabulary');
 
-    // Load all vocabularies.
-    $vocabularies = $vocabularies->loadMultiple();
-
-    $vocabsWithField = [];
-    // Iterate over each vocabulary and check for the field.
-    foreach ($vocabularies as $vocabulary) {
-
-      // Get the field definitions for the current vocabulary.
-      $fieldDef = $this->entityFieldManager->getFieldDefinitions('taxonomy_term', $vocabulary->id());
-
-      // Check if the field exists in the field definitions.
-      if (isset($fieldDef[$fieldName])) {
+    // Load group vocabulary.
+    $groupVocab = $vocabularies->load(self::GROUP_VOCABULARY);
+    if ($groupVocab) {
+      $fieldDef = $this->entityFieldManager->getFieldDefinitions('taxonomy_term', $groupVocab->id());
+      // Check if the correct field exists.
+      if (isset($fieldDef[self::GROUP_ID_FIELD])) {
         /** @var Drupal\taxonomy\Entity\Vocabulary $vocabulary */
-        $vocabsWithField[] = $vocabulary->get('name');
+        return TRUE;
       }
-
     }
 
-    if (!empty($vocabsWithField)) {
-      return $vocabsWithField;
-    }
-
-    return NULL;
+    return FALSE;
   }
 
   /**

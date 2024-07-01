@@ -82,7 +82,7 @@ class LocalistSettings extends ConfigFormBase {
     $localistEnabled = $config->get('enable_localist_sync');
     $endpointValid = $this->localistManager->checkEndpoint();
     $groupMigrationExists = $this->localistManager->getMigrationStatus($config->get('localist_group_migration'));
-    $groupTaxonomyStatus = $this->localistManager->groupIdFieldExists();
+    $groupTaxonomyStatus = $this->localistManager->checkGroupTaxonomy();
     $groupsImported = !empty($groupMigrationExists) ? $this->localistManager->getMigrationStatus($config->get('localist_group_migration'))['imported'] > 0 : FALSE;
     $localistGroup = $this->localistManager->getGroupTaxonomyEntity();
 
@@ -119,9 +119,10 @@ class LocalistSettings extends ConfigFormBase {
       $groupsImported &&
       !empty($groupMigrationExists)
       ) {
+      $syncUrl = Url::fromRoute('localist_drupal.run_migrations')->toString();
       $form['sync_now_button'] = [
         '#type' => 'markup',
-        '#markup' => '<a class="button" href="/admin/localist/sync">Sync now</a>',
+        '#markup' => "<a class='button' href='$syncUrl'>Sync now</a>",
       ];
     }
 
@@ -151,7 +152,10 @@ class LocalistSettings extends ConfigFormBase {
 
     // Only show the group picker if the group migration has been run.
     if ($localistEnabled && $groupsImported && $endpointValid) {
-      $term = $config->get('localist_group') ? $this->entityTypeManager->getStorage('taxonomy_term')->load($config->get('localist_group')) : NULL;
+      $term = NULL;
+      if ($localistGroup) {
+        $term = $config->get('localist_group') ? $this->entityTypeManager->getStorage('taxonomy_term')->load($config->get('localist_group')) : NULL;
+      }
 
       $form['groups']['localist_group'] = [
         '#title' => $this->t('Group to sync events'),
@@ -161,7 +165,7 @@ class LocalistSettings extends ConfigFormBase {
         '#default_value' => $term ?: NULL,
         '#selection_handler' => 'default',
         '#selection_settings' => [
-          'target_bundles' => ['localist_groups'],
+          'target_bundles' => [$this->localistManager::GROUP_VOCABULARY],
         ],
         '#required' => TRUE,
       ];

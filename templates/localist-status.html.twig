@@ -1,5 +1,5 @@
 {{ attach_library('localist_drupal/settings') }}
-<h2>Pre-Import Check</h2>
+<h2>Preflight Check</h2>
 
 <ul class="localist-status">
   <li>
@@ -32,10 +32,10 @@
   <li>
     {% if group_taxonomy_status %}
       {% include svg_check %}
-      Localist Group ID field exists in vocabularies: {{ vocabs|trim }}.
+      Localist group vocabulary and group ID field exist.
     {% else %}
       {% include svg_xmark %}
-      Localist Group ID field does not exist in a taxonomy vocabulary. There must be a field on a vocabulary with machine name <code>field_localist_group_id</code> that is used in the group migration.
+      Localist group vocabulary with machine name <code>localist_groups</code> must exist and must include a field with machine name <code>field_localist_group_id</code>.
     {% endif %}
   </li>
 

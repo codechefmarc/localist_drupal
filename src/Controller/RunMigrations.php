@@ -66,17 +66,18 @@ class RunMigrations extends ControllerBase implements ContainerInjectionInterfac
    */
   public function runAllMigrations() {
 
-    if ($this->localistConfig->get('enable_localist_sync')) {
+    if ($this->localistManager->preflightChecks()) {
 
       $messageData = $this->localistManager->runAllMigrations();
-      if ($messageData) {
+      dpm($messageData);
+      if (isset($messageData['localist_events'])) {
         $eventsImported = $messageData['localist_events']['imported'];
         $message = "Synchronized $eventsImported events.";
         $this->messenger()->addStatus($message);
       }
     }
     else {
-      $message = "Localist sync is not enabled. No sync was performed.";
+      $message = "One of the preflight checks failed. Check the Preflight Check status on the settings form.";
       $this->messenger()->addError($message);
     }
 
@@ -94,8 +95,13 @@ class RunMigrations extends ControllerBase implements ContainerInjectionInterfac
     if ($this->localistConfig->get('enable_localist_sync')) {
       // Check endpoint before running migration.
       if ($this->localistManager->checkEndpoint()) {
-        $this->localistManager->runMigration('localist_groups');
-        $this->messenger()->addStatus('Successfully imported Localist groups.');
+        if ($this->localistManager->getMigrationStatus($this->localistConfig->get('localist_group_migration'))) {
+          $this->localistManager->runMigration($this->localistConfig->get('localist_group_migration'));
+          $this->messenger()->addStatus('Successfully imported Localist groups.');
+        }
+        else {
+          $this->messenger()->addError('Group migration was not found. No groups were imported.');
+        }
       }
       else {
         $this->messenger()->addError('Error getting groups. Check that the endpoint is correct.');

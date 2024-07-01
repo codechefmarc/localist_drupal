@@ -7,6 +7,7 @@ use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\Database\Connection;
 use Drupal\Core\DependencyInjection\ContainerInjectionInterface;
+use Drupal\Core\Entity\EntityFieldManager;
 use Drupal\Core\Entity\EntityTypeManager;
 use Drupal\Core\Extension\ModuleHandler;
 use Drupal\Core\Messenger\MessengerInterface;
@@ -100,6 +101,13 @@ class LocalistManager extends ControllerBase implements ContainerInjectionInterf
   protected $database;
 
   /**
+   * The entity field manager service.
+   *
+   * @var \Drupal\Core\Entity\EntityFieldManager
+   */
+  protected $entityFieldManager;
+
+  /**
    * Constructs a new LocalistManager object.
    */
   public function __construct(
@@ -111,6 +119,7 @@ class LocalistManager extends ControllerBase implements ContainerInjectionInterf
     TimeInterface $time,
     MessengerInterface $messenger,
     Connection $database,
+    EntityFieldManager $entity_field_manager,
   ) {
     $this->localistConfig = $config_factory->get('localist_drupal.settings');
     $this->endpointBase = $this->localistConfig->get('localist_endpoint');
@@ -121,6 +130,7 @@ class LocalistManager extends ControllerBase implements ContainerInjectionInterf
     $this->time = $time;
     $this->messenger = $messenger;
     $this->database = $database;
+    $this->entityFieldManager = $entity_field_manager;
   }
 
   /**
@@ -136,6 +146,7 @@ class LocalistManager extends ControllerBase implements ContainerInjectionInterf
       $container->get('datetime.time'),
       $container->get('messenger'),
       $container->get('database'),
+      $container->get('entity_field.manager'),
     );
   }
 
@@ -331,6 +342,9 @@ class LocalistManager extends ControllerBase implements ContainerInjectionInterf
 
   }
 
+  /**
+   * Gets the last imported timestamp for a given migration.
+   */
   private function getLastImportedTimestamp($migration_id) {
     $migration = $this->migrationManager->createInstance($migration_id);
 
@@ -376,24 +390,36 @@ class LocalistManager extends ControllerBase implements ContainerInjectionInterf
   }
 
   /**
-   * When Localist is first installed, remove the old terms for experiences.
+   * Status of the group vocabulary which are required for the group  migration.
    */
-  public function removeOldExperiences() {
-    $termsToRemove = [
-      'In-person',
-      'Online',
-    ];
+  public function groupIdFieldExists() {
+    $fieldName = 'field_localist_group_id';
+    // Get the storage for taxonomy vocabularies.
+    $vocabularies = $this->entityTypeManager()->getStorage('taxonomy_vocabulary');
 
-    foreach ($termsToRemove as $term) {
-      $terms = $this->entityTypeManager
-        ->getStorage('taxonomy_term')
-        ->loadByProperties(['name' => $term, 'vid' => 'event_type']);
-      if ($terms) {
-        foreach ($terms as $term) {
-          $term->delete();
-        }
+    // Load all vocabularies.
+    $vocabularies = $vocabularies->loadMultiple();
+
+    $vocabsWithField = [];
+    // Iterate over each vocabulary and check for the field.
+    foreach ($vocabularies as $vocabulary) {
+
+      // Get the field definitions for the current vocabulary.
+      $fieldDef = $this->entityFieldManager->getFieldDefinitions('taxonomy_term', $vocabulary->id());
+
+      // Check if the field exists in the field definitions.
+      if (isset($fieldDef[$fieldName])) {
+        /** @var Drupal\taxonomy\Entity\Vocabulary $vocabulary */
+        $vocabsWithField[] = $vocabulary->get('name');
       }
+
     }
+
+    if (!empty($vocabsWithField)) {
+      return $vocabsWithField;
+    }
+
+    return NULL;
   }
 
   /**
@@ -425,7 +451,10 @@ class LocalistManager extends ControllerBase implements ContainerInjectionInterf
     return $ticketData;
   }
 
-  public function getSvg($filename) {
+  /**
+   * Gets the path to icon files.
+   * */
+  public function getIcon($filename) {
     $modulePath = $this->moduleHandler->getModule('localist_drupal')->getPath();
     $svgPath = $modulePath . "/assets/icons/$filename";
     if (file_exists($svgPath)) {
@@ -436,29 +465,32 @@ class LocalistManager extends ControllerBase implements ContainerInjectionInterf
     }
   }
 
+  /**
+   * Gets a formatted time-ago given a timestamp.
+   */
   private function timeAgo($timestamp) {
     $time_difference = time() - $timestamp;
 
-    if ($time_difference < 1 ) {
-        return 'less than 1 second ago';
+    if ($time_difference < 1) {
+      return 'less than 1 second ago';
     }
-    $condition = array( 12 * 30 * 24 * 60 * 60 =>  'year',
-                30 * 24 * 60 * 60       =>  'month',
-                24 * 60 * 60            =>  'day',
-                60 * 60                 =>  'hour',
-                60                      =>  'minute',
-                1                       =>  'second'
-    );
+    $condition = [
+      12 * 30 * 24 * 60 * 60 => 'year',
+      30 * 24 * 60 * 60      => 'month',
+      24 * 60 * 60           => 'day',
+      60 * 60                => 'hour',
+      60                     => 'minute',
+      1                      => 'second',
+    ];
 
     foreach ($condition as $secs => $str) {
-        $d = $time_difference / $secs;
+      $d = $time_difference / $secs;
 
-        if ($d >= 1) {
-            $t = round($d);
-            return $t . ' ' . $str . ( $t > 1 ? 's' : '' ) . ' ago';
-        }
+      if ($d >= 1) {
+        $t = round($d);
+        return $t . ' ' . $str . ($t > 1 ? 's' : '') . ' ago';
+      }
     }
-}
+  }
 
 }
-

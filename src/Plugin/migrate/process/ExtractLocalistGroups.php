@@ -17,9 +17,9 @@ use Drupal\migrate\Row;
  * )
  *
  * @code
- *   field_event_type:
+ *   field_localist_groups:
  *     plugin: extract_localist_groups
- *     source: event_groups
+ *     source: localist_groups
  * @endcode
  */
 class ExtractLocalistGroups extends ProcessPluginBase {

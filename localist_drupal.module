@@ -46,6 +46,7 @@ function localist_drupal_theme($existing, $type, $theme, $path) {
       'variables' => [
         'endpoint_status' => NULL,
         'group_migration_status' => [],
+        'group_taxonomy_status' => NULL,
         'group_selected' => NULL,
         'svg_check' => NULL,
         'svg_xmark' => NULL,

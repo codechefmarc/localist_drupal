@@ -1,11 +1,11 @@
 {{ attach_library('localist_drupal/settings') }}
-<h2>Status</h2>
+<h2>Pre-Import Check</h2>
 
 <ul class="localist-status">
   <li>
     {% if endpoint_status %}
       {% include svg_check %}
-      Localist endpoint
+      Localist endpoint is returning data.
     {% else %}
       {% include svg_xmark %}
       Localist endpoint is not returning data. Check the endpoint URL and save configuration.
@@ -15,10 +15,27 @@
   <li>
     {% if group_migration_status %}
       {% include svg_check %}
-      Group migration
+      Group migration YML exists.
     {% else %}
       {% include svg_xmark %}
-      Group migration does not appear to exist. See the README.md for how to create a group migration. Default migration is <code>localist_groups</code>
+      Group migration YML does not appear to exist. See the README.md for how to create a group migration. Default migration is <code>localist_groups</code>
+    {% endif %}
+  </li>
+
+  {% set vocabs %}
+    {% for vocab in group_taxonomy_status %}
+      {{ vocab }}
+      {{- not loop.last ? ',' -}}
+    {% endfor %}
+  {% endset %}
+
+  <li>
+    {% if group_taxonomy_status %}
+      {% include svg_check %}
+      Localist Group ID field exists in vocabularies: {{ vocabs|trim }}.
+    {% else %}
+      {% include svg_xmark %}
+      Localist Group ID field does not exist in a taxonomy vocabulary. There must be a field on a vocabulary with machine name <code>field_localist_group_id</code> that is used in the group migration.
     {% endif %}
   </li>
 
@@ -26,7 +43,7 @@
   {% if group_migration_status %}
     {% if group_migration_status.imported > 0 %}
       {% include svg_check %}
-      Localist groups imported ({{ group_migration_status.imported }} groups, {{ group_migration_status.last_imported }})
+      Localist groups imported. ({{ group_migration_status.imported }} groups, {{ group_migration_status.last_imported }})
     {% else %}
       {% include svg_xmark %}
       Localist groups have not been imported. Click "Create Groups" to import groups.
@@ -40,7 +57,7 @@
   <li>
     {% if group_selected %}
       {% include svg_check %}
-      Localist group selected
+      Localist group selected.
     {% else %}
       {% include svg_xmark %}
       Localist group has not been selected. Please select one and save configuration.

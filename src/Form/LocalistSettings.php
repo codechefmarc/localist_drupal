@@ -81,8 +81,9 @@ class LocalistSettings extends ConfigFormBase {
     $config = $this->config('localist_drupal.settings');
     $localistEnabled = $config->get('enable_localist_sync');
     $endpointValid = $this->localistManager->checkEndpoint();
-    $groupMigrationExists = !empty($this->localistManager->getMigrationStatus($config->get('localist_group_migration')));
-    $groupsImported = $groupMigrationExists ? $this->localistManager->getMigrationStatus($config->get('localist_group_migration'))['imported'] > 0 : FALSE;
+    $groupMigrationExists = $this->localistManager->getMigrationStatus($config->get('localist_group_migration'));
+    $groupTaxonomyStatus = $this->localistManager->groupIdFieldExists();
+    $groupsImported = !empty($groupMigrationExists) ? $this->localistManager->getMigrationStatus($config->get('localist_group_migration'))['imported'] > 0 : FALSE;
     $localistGroup = $this->localistManager->getGroupTaxonomyEntity();
 
     $form['enable_localist_sync'] = [
@@ -97,10 +98,11 @@ class LocalistSettings extends ConfigFormBase {
       $statusArea = [
         '#theme' => 'localist_status',
         '#endpoint_status' => $endpointValid,
-        '#group_migration_status' => $this->localistManager->getMigrationStatus($config->get('localist_group_migration')),
-        '#group_selected' => $this->localistManager->getGroupTaxonomyEntity(),
-        '#svg_check' => $this->localistManager->getSvg('circle-check.svg'),
-        '#svg_xmark' => $this->localistManager->getSvg('circle-xmark.svg'),
+        '#group_migration_status' => $groupMigrationExists,
+        '#group_taxonomy_status' => $groupTaxonomyStatus,
+        '#group_selected' => $localistGroup,
+        '#svg_check' => $this->localistManager->getIcon('circle-check.svg'),
+        '#svg_xmark' => $this->localistManager->getIcon('circle-xmark.svg'),
       ];
 
       $rendered = \Drupal::service('renderer')->render($statusArea);
@@ -115,7 +117,7 @@ class LocalistSettings extends ConfigFormBase {
       $localistEnabled &&
       $localistGroup &&
       $groupsImported &&
-      $groupMigrationExists
+      !empty($groupMigrationExists)
       ) {
       $form['sync_now_button'] = [
         '#type' => 'markup',
@@ -164,7 +166,7 @@ class LocalistSettings extends ConfigFormBase {
         '#required' => TRUE,
       ];
     }
-    elseif ($localistEnabled && $endpointValid && !$groupsImported && $groupMigrationExists) {
+    elseif ($localistEnabled && $endpointValid && !$groupsImported && !empty($groupMigrationExists)) {
       $syncGroupsUrl = Url::fromRoute('localist_drupal.sync_groups')->toString();
       $form['groups']['no_group_sync_message'] = [
         '#type' => 'markup',

@@ -1,0 +1,10 @@
+name: 'Localist Example'
+type: 'Content type'
+install:
+  - text
+  - node
+config:
+  actions:
+    localist_drupal.settings:
+      simple_config_update:
+        localist_event_migration: 'localist_example_events'

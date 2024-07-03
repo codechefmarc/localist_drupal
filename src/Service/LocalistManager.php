@@ -383,7 +383,7 @@ class LocalistManager extends ControllerBase implements ContainerInjectionInterf
     $map = $migration->getIdMap();
     $status = [
       'imported' => $map->importedCount(),
-      'last_imported' => $this->dateFormatter->formatTimeDiffSince($this->getLastImportedTimestamp($migration_id)) . " ago",
+      'last_imported' => $this->getLastImportedTimestamp($migration_id) ? $this->dateFormatter->formatTimeDiffSince($this->getLastImportedTimestamp($migration_id)) . " ago" : NULL,
     ];
     return $status;
 
@@ -421,17 +421,18 @@ class LocalistManager extends ControllerBase implements ContainerInjectionInterf
     if ($migration instanceof MigrationInterface) {
       // Get the migrate map table name.
       $map_table = 'migrate_map_' . $migration->id();
+      if ($this->database->schema()->tableExists($map_table)) {
+        // Query the migrate map table for the last imported timestamp.
+        $query = $this->database->select($map_table, 'm')
+          ->fields('m', ['last_imported'])
+          ->orderBy('last_imported', 'DESC')
+          ->range(0, 1);
 
-      // Query the migrate map table for the last imported timestamp.
-      $query = $this->database->select($map_table, 'm')
-        ->fields('m', ['last_imported'])
-        ->orderBy('last_imported', 'DESC')
-        ->range(0, 1);
+        $result = $query->execute()->fetchField();
 
-      $result = $query->execute()->fetchField();
-
-      if ($result) {
-        return $result;
+        if ($result) {
+          return $result;
+        }
       }
     }
 
@@ -514,9 +515,9 @@ class LocalistManager extends ControllerBase implements ContainerInjectionInterf
    * */
   public function getIcon($filename) {
     $modulePath = $this->moduleHandler->getModule('localist_drupal')->getPath();
-    $svgPath = $modulePath . "/assets/icons/$filename";
-    if (file_exists($svgPath)) {
-      return $svgPath;
+    $path = $modulePath . "/assets/icons/$filename";
+    if (file_exists($path)) {
+      return $path;
     }
     else {
       return $this->t(":filename file not found.", [':filename' => $filename]);

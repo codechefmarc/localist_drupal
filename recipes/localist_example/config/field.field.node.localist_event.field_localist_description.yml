@@ -1,0 +1,21 @@
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_localist_description
+    - node.type.localist_event
+  module:
+    - text
+id: node.localist_event.field_localist_description
+field_name: field_localist_description
+entity_type: node
+bundle: localist_event
+label: Description
+description: ''
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings:
+  allowed_formats: {  }
+field_type: text_long

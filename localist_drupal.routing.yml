@@ -19,3 +19,10 @@ localist_drupal.sync_groups:
     _title: 'Sync Localist groups'
   requirements:
     _permission: 'manage localist'
+localist_drupal.create_example:
+  path: '/admin/config/services/localist/create-example'
+  defaults:
+    _controller: '\Drupal\localist_drupal\Controller\LocalistExample::createExampleConfig'
+    _title: 'Create example Localist content type and fields'
+  requirements:
+    _permission: 'manage localist'

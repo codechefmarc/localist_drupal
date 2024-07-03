@@ -121,6 +121,14 @@ class LocalistSettings extends ConfigFormBase {
       ];
     }
 
+    if ($this->localistManager->preflightChecks()) {
+      $createExampleUrl = Url::fromRoute('localist_drupal.create_example')->toString();
+      $form['create_example_button'] = [
+        '#type' => 'markup',
+        '#markup' => "<a class='button' href='$createExampleUrl'>Create Example</a>",
+      ];
+    }
+
     $form['localist_endpoint'] = [
       '#type' => 'url',
       '#title' => $this->t('Localist endpoint base URL'),

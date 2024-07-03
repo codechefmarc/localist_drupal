@@ -43,7 +43,7 @@
   {% if group_migration_status %}
     {% if group_migration_status.imported > 0 %}
       {% include svg_check %}
-      Localist groups imported. ({{ group_migration_status.imported }} groups, {{ group_migration_status.last_imported }})
+      {{ group_migration_status.imported }} Localist groups imported. Last new data: {{ group_migration_status.last_imported }}.
     {% else %}
       {% include svg_xmark %}
       Localist groups have not been imported. Click "Create Groups" to import groups.

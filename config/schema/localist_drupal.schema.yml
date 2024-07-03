@@ -1,0 +1,7 @@
+localist_drupal.settings:
+  type: config_object
+  label: 'Localist Drupal Settings'
+  mapping:
+    localist_event_migration:
+      type: string
+      label: 'Localist Event Migration'

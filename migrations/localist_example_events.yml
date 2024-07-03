@@ -1,0 +1,45 @@
+id: localist_example_events
+label: 'Localist example events'
+source:
+  plugin: url
+  data_fetcher_plugin: http
+  data_parser_plugin: localist_json
+  track_changes: true
+  urls:
+    # @see localist_drupal.module
+    callback: localist_drupal_migrate_url
+  localist_endpoint: 'events'
+  item_selector: events
+  fields:
+    -
+      name: event_id
+      label: 'Event ID'
+      selector: localist_data/id
+    -
+      name: localist_title
+      label: 'Localist title'
+      selector: localist_data/title
+    -
+      name: localist_description
+      label: 'Localist description'
+      selector: localist_data/description
+
+  ids:
+    event_id:
+      # This would be an int, but it is too long for the DB
+      type: string
+
+process:
+  title: localist_title
+  #field_localist_id: event_id
+  field_localist_description/value: localist_description
+  field_localist_description/format:
+    plugin: first_text_format
+
+destination:
+  plugin: 'entity:node'
+  default_bundle: localist_event
+  overwrite_properties:
+    - title
+    - field_localist_id
+    - field_event_description

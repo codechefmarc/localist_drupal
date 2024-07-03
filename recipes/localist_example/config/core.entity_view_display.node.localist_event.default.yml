@@ -1,0 +1,27 @@
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.field.node.localist_event.field_localist_description
+    - node.type.localist_event
+  module:
+    - text
+    - user
+id: node.localist_event.default
+targetEntityType: node
+bundle: localist_event
+mode: default
+content:
+  field_localist_description:
+    type: text_default
+    label: above
+    settings: {  }
+    third_party_settings: {  }
+    weight: 1
+    region: content
+  links:
+    settings: {  }
+    third_party_settings: {  }
+    weight: 0
+    region: content
+hidden: {  }

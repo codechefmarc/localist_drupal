@@ -3,6 +3,7 @@ type: 'Content type'
 install:
   - text
   - node
+  - user
 config:
   actions:
     localist_drupal.settings:

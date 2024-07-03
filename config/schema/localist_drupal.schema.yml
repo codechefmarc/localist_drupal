@@ -2,6 +2,21 @@ localist_drupal.settings:
   type: config_object
   label: 'Localist Drupal Settings'
   mapping:
+    enable_localist_sync:
+      type: boolean
+      label: 'Enable Localist sync'
+    localist_endpoint:
+      type: string
+      label: 'Localist endpoint base URL'
+    localist_group_migration:
+      type: string
+      label: 'Group migration'
+    localist_dependency_migrations:
+      type: sequence
+        label: 'Dependency migrations'
+        sequence:
+          type: string
+          label: 'Dependency migration'
     localist_event_migration:
       type: string
-      label: 'Localist Event Migration'
+      label: 'Event Migration'

@@ -23,6 +23,10 @@ source:
       name: localist_description
       label: 'Localist description'
       selector: localist_data/description
+    -
+      name: event_dates
+      label: 'Event dates'
+      selector: instances
 
   ids:
     event_id:
@@ -35,11 +39,13 @@ process:
   field_localist_description/value: localist_description
   field_localist_description/format:
     plugin: first_text_format
+  field_localist_date: event_dates
 
 destination:
   plugin: 'entity:node'
   default_bundle: localist_event
   overwrite_properties:
     - title
-    - field_localist_id
-    - field_event_description
+    #- field_localist_id
+    - field_localist_description
+    - field_localist_date

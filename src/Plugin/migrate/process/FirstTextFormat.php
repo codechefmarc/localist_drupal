@@ -63,10 +63,10 @@ class FirstTextFormat extends ProcessPluginBase implements ContainerFactoryPlugi
    */
   public function transform($value, MigrateExecutableInterface $migrate_executable, Row $row, $destination_property) {
     $formats = $this->entityTypeManager->getStorage('filter_format')->loadMultiple();
-    $first_format = reset($formats);
+    $firstFormat = reset($formats);
 
     // Fallback to 'plain_text' if no formats are found.
-    return $first_format ? $first_format->id() : 'plain_text';
+    return $firstFormat ? $firstFormat->id() : 'plain_text';
   }
 
 }

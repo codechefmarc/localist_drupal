@@ -9,3 +9,4 @@ dependencies:
   - drupal:migrate
   - migrate_plus:migrate_plus
   - migrate_tools:migrate_tools
+  - smart_date:smart_date

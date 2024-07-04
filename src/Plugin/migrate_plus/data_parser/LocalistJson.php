@@ -79,7 +79,6 @@ class LocalistJson extends Json implements ContainerFactoryPluginInterface, Data
           $dates[$parentEventId][] = [
             'value' => $startDate,
             'end_value' => $endDate,
-            'timezone' => 'America/New_York',
             'duration' => $duration,
           ];
         }

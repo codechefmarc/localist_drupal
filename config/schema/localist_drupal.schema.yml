@@ -12,11 +12,8 @@ localist_drupal.settings:
       type: string
       label: 'Group migration'
     localist_dependency_migrations:
-      type: sequence
-        label: 'Dependency migrations'
-        sequence:
-          type: string
-          label: 'Dependency migration'
+      type: array
+      label: 'Dependency migrations'
     localist_event_migration:
       type: string
       label: 'Event Migration'

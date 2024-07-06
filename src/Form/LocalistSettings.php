@@ -85,6 +85,7 @@ class LocalistSettings extends ConfigFormBase {
     $groupTaxonomyStatus = $this->localistManager->checkGroupTaxonomy();
     $groupsImported = !empty($groupMigrationExists) ? $this->localistManager->getMigrationStatus($config->get('localist_group_migration'))['imported'] > 0 : FALSE;
     $localistGroup = $this->localistManager->getGroupTaxonomyEntity();
+    $examplesCreated = $this->localistManager->examplesCreated();
 
     $form['enable_localist_sync'] = [
       '#type' => 'checkbox',
@@ -92,6 +93,14 @@ class LocalistSettings extends ConfigFormBase {
       '#description' => $this->t('Once enabled, Localist data will sync events for the selected group roughly every hour.'),
       '#default_value' => $config->get('enable_localist_sync') ?: FALSE,
     ];
+
+    if ($this->localistManager->preflightChecks()) {
+      $syncUrl = Url::fromRoute('localist_drupal.run_migrations')->toString();
+      $form['sync_now_button'] = [
+        '#type' => 'markup',
+        '#markup' => "<a class='button' href='$syncUrl'>Sync now</a>",
+      ];
+    }
 
     if ($localistEnabled) {
 
@@ -105,28 +114,35 @@ class LocalistSettings extends ConfigFormBase {
         '#svg_xmark' => $this->localistManager->getIcon('circle-xmark.svg'),
       ];
 
-      $rendered = \Drupal::service('renderer')->render($statusArea);
+      $renderedStatus = \Drupal::service('renderer')->render($statusArea);
 
       $form['status'] = [
         '#type' => 'item',
-        '#markup' => $rendered,
+        '#markup' => $renderedStatus,
       ];
     }
 
     if ($this->localistManager->preflightChecks()) {
-      $syncUrl = Url::fromRoute('localist_drupal.run_migrations')->toString();
-      $form['sync_now_button'] = [
-        '#type' => 'markup',
-        '#markup' => "<a class='button' href='$syncUrl'>Sync now</a>",
-      ];
-    }
 
-    if ($this->localistManager->preflightChecks()) {
-      $createExampleUrl = Url::fromRoute('localist_drupal.create_example')->toString();
-      $form['create_example_button'] = [
-        '#type' => 'markup',
-        '#markup' => "<a class='button' href='$createExampleUrl'>Create Example</a>",
+      $form['example_area_container'] = [
+        '#type' => 'details',
+        '#title' => $this->t('Example migration'),
+        '#collapsed' => TRUE,
       ];
+
+      $exampleArea = [
+        '#theme' => 'localist_example',
+        '#create_example_url' => Url::fromRoute('localist_drupal.create_example')->toString(),
+        '#examples_created' => $examplesCreated,
+      ];
+
+      $renderedExample = \Drupal::service('renderer')->render($exampleArea);
+
+      $form['example_area_container']['example'] = [
+        '#type' => 'item',
+        '#markup' => $renderedExample,
+      ];
+
     }
 
     $form['localist_endpoint'] = [

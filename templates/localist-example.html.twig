@@ -1,0 +1,16 @@
+<p>This module is intended to provide a starting place for developers to create their own Localist migrations. However, an example migration can be installed to show how this module can be used. The example is limited in scope.</p>
+
+{% if examples_created %}
+  <p>Example content type <code>localist_event</code> and vocabulary <code>localist_places</code> have been created.</p>
+  <p>Use <code>localist_example_places</code> for a dependency migration and <code>localist_example_events</code> for the event migration or you may use your own custom migrations.</p>
+{% else %}
+  <p><strong>This will perform the following actions:</strong><p>
+  <ul>
+    <li>Create a content type called Localist Event</li>
+    <li>Create a taxonomy vocabulary called Localist Places</li>
+    <li>Override the Localist settings on this page to set the dependency and event migrations to the example migrations.</li>
+  </ul>
+  <a class='button' href='{{ create_example_url }}'>Create Example</a>
+{% endif %}
+
+

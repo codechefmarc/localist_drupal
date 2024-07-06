@@ -464,6 +464,18 @@ class LocalistManager extends ControllerBase implements ContainerInjectionInterf
    * Status of the group vocabulary which are required for the group  migration.
    */
   public function checkGroupTaxonomy() {
+    $migrationDestination = FALSE;
+    $vocabularyCorrect = FALSE;
+
+    // Checks to see if the groups migration destination is correct.
+    $groupMigration = $this->localistConfig->get('localist_group_migration');
+    $migration = $this->migrationManager->createInstance($groupMigration);
+    if ($migration) {
+      if ($migration->getDestinationConfiguration()['default_bundle'] == self::GROUP_VOCABULARY) {
+        $migrationDestination = TRUE;
+      }
+    }
+
     // Get the storage for taxonomy vocabularies.
     $vocabularies = $this->entityTypeManager()->getStorage('taxonomy_vocabulary');
 
@@ -474,8 +486,12 @@ class LocalistManager extends ControllerBase implements ContainerInjectionInterf
       // Check if the correct field exists.
       if (isset($fieldDef[self::GROUP_ID_FIELD])) {
         /** @var Drupal\taxonomy\Entity\Vocabulary $vocabulary */
-        return TRUE;
+        $vocabularyCorrect = TRUE;
       }
+    }
+
+    if ($vocabularyCorrect && $migrationDestination) {
+      return TRUE;
     }
 
     return FALSE;
@@ -522,6 +538,16 @@ class LocalistManager extends ControllerBase implements ContainerInjectionInterf
     else {
       return $this->t(":filename file not found.", [':filename' => $filename]);
     }
+  }
+
+  public function examplesCreated() {
+    if (
+      $this->entityTypeManager->getStorage('node_type')->load('localist_event') &&
+      $this->entityTypeManager->getStorage('taxonomy_vocabulary')->load('localist_places')
+      ) {
+      return TRUE;
+    }
+    return FALSE;
   }
 
 }

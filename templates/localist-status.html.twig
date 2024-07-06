@@ -32,10 +32,10 @@
   <li>
     {% if group_taxonomy_status %}
       {% include svg_check %}
-      Localist group vocabulary and group ID field exist.
+      Localist group vocabulary and group ID field exist and migration points to this vocabulary.
     {% else %}
       {% include svg_xmark %}
-      Localist group vocabulary with machine name <code>localist_groups</code> must exist and must include a field with machine name <code>field_localist_group_id</code>.
+      Localist group vocabulary with machine name <code>localist_groups</code> must exist and must include a field with machine name <code>field_localist_group_id</code> Additionally, the group migration must point to this vocabulary.
     {% endif %}
   </li>
 
@@ -43,7 +43,7 @@
   {% if group_migration_status %}
     {% if group_migration_status.imported > 0 %}
       {% include svg_check %}
-      {{ group_migration_status.imported }} Localist groups imported. Last new data: {{ group_migration_status.last_imported }}.
+      {{ group_migration_status.imported }} Localist groups imported. Last new group data: {{ group_migration_status.last_imported }}.
     {% else %}
       {% include svg_xmark %}
       Localist groups have not been imported. Click "Create Groups" to import groups.

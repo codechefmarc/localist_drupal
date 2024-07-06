@@ -27,6 +27,10 @@ source:
       name: event_dates
       label: 'Event dates'
       selector: instances
+    -
+      name: place_name
+      label: 'Place name'
+      selector: localist_data/location_name
 
   ids:
     event_id:
@@ -40,6 +44,13 @@ process:
   field_localist_description/format:
     plugin: first_text_format
   field_localist_date: event_dates
+  field_localist_place:
+    plugin: entity_lookup
+    source: place_name
+    value_key: name
+    bundle_key: vid
+    bundle: localist_places
+    entity_type: taxonomy_term
 
 destination:
   plugin: 'entity:node'
@@ -49,3 +60,4 @@ destination:
     #- field_localist_id
     - field_localist_description
     - field_localist_date
+    - field_localist_place

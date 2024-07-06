@@ -46,8 +46,6 @@ class LocalistExample extends ControllerBase implements ContainerInjectionInterf
    */
   public function createExampleConfig() {
 
-    dpm(class_exists('Drupal\Core\Recipe\Recipe'));
-
     $modulePath = $this->moduleHandler->getModule('localist_drupal')->getPath();
     $path = $modulePath . "/recipes/localist_example";
     $recipe = Recipe::createFromDirectory($path);
@@ -56,7 +54,6 @@ class LocalistExample extends ControllerBase implements ContainerInjectionInterf
     }
     catch (\Throwable $th) {
       // throw $th;.
-      dpm("recipe not imported...");
     }
 
     $redirectUrl = Url::fromRoute('localist_drupal.settings')->toString();

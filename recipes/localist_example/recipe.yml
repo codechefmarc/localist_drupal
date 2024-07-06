@@ -4,8 +4,13 @@ install:
   - text
   - node
   - user
+  - taxonomy
+  - smart_date
+  - path
 config:
   actions:
     localist_drupal.settings:
       simple_config_update:
         localist_event_migration: 'localist_example_events'
+        localist_dependency_migrations:
+          - 'localist_example_places'

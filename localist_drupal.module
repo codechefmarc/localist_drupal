@@ -34,6 +34,11 @@ function localist_drupal_help($route_name, RouteMatchInterface $route_match) {
 
       return $output;
 
+    case 'localist_drupal.settings':
+      $output = '';
+      $output .= 'This module is intended to provide migration plugins as well as a starting place to work with the Localist API to import events. An optional working example is provided. For more information about how to create custom migrations for Localist, visit the README.md file in the module root.</p>';
+
+      return $output;
   }
 }
 
@@ -52,6 +57,12 @@ function localist_drupal_theme($existing, $type, $theme, $path) {
         'svg_xmark' => NULL,
       ],
     ],
+    'localist_example' => [
+      'variables' => [
+        'create_example_url' => NULL,
+        'examples_created' => NULL,
+      ]
+    ]
   ];
 }
 

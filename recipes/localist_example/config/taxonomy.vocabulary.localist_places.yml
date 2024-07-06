@@ -1,0 +1,8 @@
+langcode: en
+status: true
+dependencies: {  }
+name: 'Localist Places'
+vid: localist_places
+description: 'Created by the Localist Drupal example recipe, this vocabulary is used to store Localist place data.'
+weight: 0
+new_revision: false

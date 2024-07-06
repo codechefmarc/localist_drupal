@@ -1,4 +1,4 @@
-# Permission to manage YaleSites Localist.
+# Permission to manage Localist.
 manage localist:
   title: 'Manage Localist settings'
   description: 'Set and change Localist sync settings.'

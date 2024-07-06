@@ -1,0 +1,35 @@
+id: localist_example_places
+label: 'Localist example places'
+source:
+  plugin: url
+  data_fetcher_plugin: http
+  data_parser_plugin: json
+  track_changes: true
+  urls:
+    # @see ys_localist.module
+    callback: localist_drupal_migrate_url
+  localist_endpoint: 'places'
+  item_selector: places
+  fields:
+    -
+      name: place_id
+      label: 'Place ID'
+      selector: place/id
+    -
+      name: place_name
+      label: 'Place name'
+      selector: place/name
+  ids:
+    place_id:
+      # This would be an int, but it is too long for the DB
+      type: string
+process:
+  name: place_name
+  #field_localist_id: place_id
+
+destination:
+  plugin: 'entity:taxonomy_term'
+  default_bundle: localist_places
+  overwrite_properties:
+    - name
+    # - field_localist_id

@@ -3,6 +3,6 @@ status: true
 dependencies: {  }
 name: 'Localist Groups'
 vid: localist_groups
-description: 'Groups from Localist migration to use for syncing events and storing group data.'
+description: 'Created by the Localist Drupal module and required for syncing events and storing group data.'
 weight: 0
 new_revision: false

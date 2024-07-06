@@ -126,7 +126,7 @@ class LocalistSettings extends ConfigFormBase {
 
       $form['example_area_container'] = [
         '#type' => 'details',
-        '#title' => $this->t('Example migration'),
+        '#title' => $this->t('Example Migration'),
         '#collapsed' => TRUE,
       ];
 
@@ -177,7 +177,7 @@ class LocalistSettings extends ConfigFormBase {
       }
 
       $form['groups']['localist_group'] = [
-        '#title' => $this->t('Group to sync events'),
+        '#title' => $this->t('Group to Sync Events'),
         '#type' => 'entity_autocomplete',
         '#target_type' => 'taxonomy_term',
         '#tags' => FALSE,

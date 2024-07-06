@@ -2,7 +2,7 @@ langcode: en
 status: true
 name: 'Localist Event'
 type: localist_event
-description: 'Provided by the Localist Example module, this content type includes fields for imported Localist event data.'
+description: 'Created by the Localist example recipe, this content type includes fields for imported Localist event data.'
 help: null
 new_revision: true
 preview_mode: 1

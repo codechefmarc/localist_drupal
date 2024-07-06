@@ -22,14 +22,22 @@ function localist_drupal_help($route_name, RouteMatchInterface $route_match) {
 
       $output = '';
       $output .= '<h3>' . t('About') . '</h3>';
-      $output .= '<p>' . t('Utilizes Drupal migrations to import events, groups, and taxonomy terms into Drupal. The module provides custom migration plugins and functions to aid with importing data from the Localist API. It also provides a basic group migration with an associated taxonomy vocabulary called Localist Groups. More information can be found in README.md.') . '</p>';
-      $output .= '<h3>' . t('Usage') . '</h3>';
+      $output .= '<p>' . t('This module utilizes Drupal migrations to import events, groups, and taxonomy terms into Drupal. It provides custom migration plugins and functions to aid with importing data from the Localist API. It also provides a basic group migration with an associated taxonomy vocabulary called Localist Groups. More information can be found in README.md.') . '</p>';
+      $output .= '<h3>' . t('Quick Setup') . '</h3>';
       $output .= '<ol>';
       $output .= '<li>' . t('<a href=":settings">Visit the Localist settings page</a> to get started.', $variables) . '</li>';
       $output .= '<li>' . t('To start syncing, first check the box next to Enable Localist sync.') . '</li>';
-      $output .= '<li>' . t('Enter in the Localist endpoint base URL for your organization. You can get this from visiting your Localist home page or by asking your Localist rep.') . '</li>';
+      $output .= '<li>' . t('Enter in the Localist endpoint base URL for your organization. You can get this from visiting your Localist home page or by asking your Localist representative.') . '</li>';
       $output .= '<li>' . t('Click Save Configuration at the bottom.') . '</li>';
-      $output .= '<li>' . t('Once the form refreshes, check the new Status section at the top. If the endpoint works, a green checkmark will appear next to Localist Endpoint.') . '</li>';
+      $output .= '<li>' . t('Once the form refreshes, check the Preflight Check section at the top. If the endpoint works, a green checkmark will appear next to Localist Endpoint.') . '</li>';
+      $output .= '<li>' . t('Click "Create Groups" to create the group taxonomy terms. Groups will synchronize from Localist and be added to the <code>localist_groups</code> taxonomy vocabulary.') . '</li>';
+      $output .= '<li>' . t('Once the groups have been created, select a group in the autocomplete for "Group to Sync Events". This module will only synchronize events from the selected group.') . '</li>';
+      $output .= '<li>' . t('At this point, all Preflight Checks should be green and the module is set up for accepting custom migrations. No events will be synchronized until an Event Migration is specified.') . '</li>';
+      $output .= '<li>' . t('An optional example migration can be added by opening the "Example Migration" details and clicking on "Create Example".') . '</li>';
+      $output .= '</ol>';
+      $output .= '<h3>' . t('Creating Custom Migrations') . '</h3>';
+      $output .= '<ol>';
+      $output .= '<li>' . t('Please visit the README.md file in the root of the module to learn how to create custom migrations for this module.') . '</li>';
       $output .= '</ol>';
 
       return $output;

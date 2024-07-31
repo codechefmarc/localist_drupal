@@ -79,6 +79,7 @@ class LocalistSettings extends ConfigFormBase {
    */
   public function buildForm(array $form, FormStateInterface $form_state) {
     $config = $this->config('localist_drupal.settings');
+
     $localistEnabled = $config->get('enable_localist_sync');
     $endpointValid = $this->localistManager->checkEndpoint();
     $groupMigrationExists = $this->localistManager->getMigrationStatus($config->get('localist_group_migration'));

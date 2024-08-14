@@ -9,6 +9,7 @@
   - [Optional Example Migration](#optional-example-migration)
 - [Running Migrations](#running-migrations)
 - [Overriding Migrations](#overriding-migrations)
+  - [Source Plugin Changes](#source-plugin-changes)
   - [Group Migration Requirement](#group-migration-requirement)
   - [Source Plugin Requirement](#source-plugin-requirement)
   - [Optional Process Plugins](#optional-process-plugins)
@@ -65,7 +66,7 @@ If not already added, add the following to the relevant sections of the root `co
 7. Once the form refreshes, check the Preflight Check section at the top. If the endpoint works, a green checkmark will appear next to Localist Endpoint.
 8. Click "Create Groups" to create the group taxonomy terms. Groups will synchronize from Localist and be added to the <code>localist_groups</code> taxonomy vocabulary.
 9. Once the groups have been created, select a group in the autocomplete for "Group to Sync Events". This will synchronize events from the selected group.
-10. At this point, all Preflight Checks should be green and the module is set up for accepting custom migrations. No events will be synchronized until an Event Migration is specified.
+10. At this point, all Preflight Checks should be green and the module is set up for accepting custom migrations. No events will be synchronized until an Event Migration is specified. See below for more information about creating an event migration.
 
 ## Optional Example Migration
 
@@ -74,13 +75,64 @@ If not already added, add the following to the relevant sections of the root `co
 3. It will also override the configuration and add two migrations to the settings: `localist_example_events` and `localist_example_places`.
 
 # Running Migrations
-* Migrations will run on cron and will sync events roughly every hour if Enable Localist sync is checked.
+* As long as the "Enable Localist sync" is checked and the all Preflight Checks are green. migrations will run on cron and will sync events roughly every hour.
 * Manual sync is also possible via the settings form by clicking on the "Sync Now" button.
-* If a migration is not found, a warning message will inform only when running migrations from the settings page, so this is a good place to test migration status.
+* If a migration is not found, a warning message will inform only when running migrations from the settings page. Therefore it is a good idea to test migrations via the "Sync Now" button on the settings page.
 
 # Overriding Migrations
 
-General info here
+Migrations used for this Localist module follow the standard Drupal migration YML structure with a few small changes noted below. If you are new to the migration API, a great resource is [31 days of Drupal migrations](https://understanddrupal.com/courses/31-days-of-migrations/).
+
+To create your own migrations, create a custom module with a `migrations` directory under the root of the module, and create migration `yml` files in that directory that follow a similar structure to the examples provided.
+
+Enable your custom module, and then enter the migration `id` into the Localist settings form in the appropriate field. For example, if it is an events migration, enter the machine name into the "Event Migration" field and save the settings. The group migration can also be overridden (see below) and there are also dependency migrations (that will get imported before events - i.e. for things like taxonomy terms).
+
+The following notes will refer to the `migrations/localist_example_events` migration provided in this module as an example.
+
+## Source Plugin Changes
+
+Take a look at the source structure of the example migration:
+
+```yml
+id: localist_example_events
+label: 'Localist example events'
+source:
+  plugin: url
+  data_fetcher_plugin: http
+  data_parser_plugin: localist_json
+  track_changes: true
+  urls:
+    # @see localist_drupal.module
+    callback: localist_drupal_migrate_url
+  localist_endpoint: 'events'
+  item_selector: events
+  fields:
+    -
+      name: event_id
+      label: 'Event ID'
+      selector: localist_data/id
+    -
+      name: localist_title
+      label: 'Localist title'
+      selector: localist_data/title
+  ids:
+    event_id:
+      # This would be an int, but it is too long for the DB
+      type: string
+```
+
+1. The `id` of the migration must be unique and is what is used in the settings form to inform the Localist Drupal module.
+2. The data parser plugin as part of the source uses a custom `localist_json` parser that handles the unique structure of the Localist API.
+3. The `urls` does not provide a direct URL, but instead a callback function to allow the URL to come from the settings form, supports paging in the Localist API, and allows the same callback to be used across multiple migrations.
+4. The `localist_endpoint` is required to tell the callback which endpoint to use. The following endpoints are currently supported:
+- `events`
+- `places`
+- `filters`
+- `groups`
+- `photos`
+- `tickets`
+5. In the `fields` section for the title field (for example), notice the `selector` is pointing to `localist_data/title` - the `localist_data/` is important to preface before the field name from Localist. Field names from Localist can be found in the events section of the [Localist API documentation](https://developer.localist.com/doc/api#events).
+
 
 ## Group Migration Requirement
 

@@ -10,8 +10,8 @@
 - [Running Migrations](#running-migrations)
 - [Overriding Migrations](#overriding-migrations)
   - [Source Plugin Changes](#source-plugin-changes)
+  - [Event Dates](#event-dates)
   - [Group Migration Requirement](#group-migration-requirement)
-  - [Source Plugin Requirement](#source-plugin-requirement)
   - [Optional Process Plugins](#optional-process-plugins)
 - [Helper Methods](#helper-methods)
 
@@ -94,6 +94,7 @@ The following notes will refer to the `migrations/localist_example_events` migra
 Take a look at the source structure of the example migration:
 
 ```yml
+(/migrations/localist_example_events.yml)
 id: localist_example_events
 label: 'Localist example events'
 source:
@@ -133,14 +134,39 @@ source:
 - `tickets`
 5. In the `fields` section for the title field (for example), notice the `selector` is pointing to `localist_data/title` - the `localist_data/` is important to preface before the field name from Localist. Field names from Localist can be found in the events section of the [Localist API documentation](https://developer.localist.com/doc/api#events).
 
+## Event Dates
+
+Obviously one of the most important parts of the Localist event migration are the dates of the event. We have found the best way to support dates coming from Localist is to use the [Smart Date](https://www.drupal.org/project/smart_date) contrib module which is a requirement of this module. This is because Smart Date handles better reoccurring events, more formatting options, and all-day events.
+
+Note the (truncated) code from the example:
+
+```yml
+(/migrations/localist_example_events.yml)
+source:
+  fields:
+    -
+      name: event_dates
+      label: 'Event dates'
+      selector: instances
+```
+
+For dates coming from Localist, use simply `instances` for the selector and it will grab all future dates from the API. Currently, only future dates are supported. In Drupal, the field the dates will go into must be a "Smart date range" field set to allow an unlimited amount of dates. This is to support all date instances of an event on one node.
 
 ## Group Migration Requirement
 
-Group migration needs to go to the group taxonomy vocab
+For the group migration, the migration destination must to be set to the `localist_groups` taxonomy vocabulary. Additionally, the `group_id` must go into a field called `field_localist_group_id` as this is what is expected from the source parser plugin callback as noted above.
 
-## Source Plugin Requirement
+```yml
+(/migrations/localist_groups.yml)
+process:
+  name: group_name
+  field_localist_group_id: group_id
+destination:
+  plugin: 'entity:taxonomy_term'
+  default_bundle: localist_groups
+```
 
-Parser plugin requirement
+Aside from those requirements, additional group information from Localist can be migrated over via an overridden group migration. See [The Localist API Groups](https://developer.localist.com/doc/api#groups) for more fields that can come over into additiomnal fields in this taxonomy vocabulary.
 
 ## Optional Process Plugins
 

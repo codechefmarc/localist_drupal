@@ -12,8 +12,10 @@
   - [Source Plugin Changes](#source-plugin-changes)
   - [Event Dates](#event-dates)
   - [Group Migration Requirement](#group-migration-requirement)
-  - [Optional Process Plugins](#optional-process-plugins)
+  - [Retrieving Custom Filters from Localist into Drupal Taxonomy](#retrieving-custom-filters-from-localist-into-drupal-taxonomy)
+  - [Using Custom Filters in an Event Migration](#using-custom-filters-in-an-event-migration)
 - [Helper Methods](#helper-methods)
+- [Troubleshooting](#troubleshooting)
 
 # What This Module Does
 * Utilizes Drupal migrations to import events, groups, and taxonomy terms into Drupal. The module provides custom migration plugins and functions to aid with importing data from the Localist API. It also provides a basic group migration with an associated taxonomy vocabulary called Localist Groups.
@@ -166,12 +168,99 @@ destination:
   default_bundle: localist_groups
 ```
 
-Aside from those requirements, additional group information from Localist can be migrated over via an overridden group migration. See [The Localist API Groups](https://developer.localist.com/doc/api#groups) for more fields that can come over into additiomnal fields in this taxonomy vocabulary.
+Aside from those requirements, additional group information from Localist can be migrated over via an overridden group migration. See [The Localist API Groups](https://developer.localist.com/doc/api#groups) for more fields that can come over into additional fields in this taxonomy vocabulary.
 
-## Optional Process Plugins
+## Retrieving Custom Filters from Localist into Drupal Taxonomy
 
-Filters
+Localist allows you to create filters for events for ease of grouping events and filtering. To get these filters over into Drupal, we recommend using a taxonomy vocabulary per filter. Secondly, set up a dependency migration to migrate those terms into Drupal. Finally, add the term to the event via the events migration. Here is an example on how to use the `extract_localist_filter` custom plugin to accomplish this.
+
+1. Set up your Drupal taxonomy vocabulary. For our example, we will use Event Type (`localist_event_type`).
+2. In your own custom module as noted in the [Overriding Migrations](#overriding-migrations) section, add a new migration for the taxonomy terms you want to import.
+
+```yml
+(custom taxonomy migration)
+id: localist_event_types
+label: 'Localist event_types'
+source:
+  plugin: url
+  data_fetcher_plugin: http
+  data_parser_plugin: json
+  track_changes: true
+  urls:
+    # @see localist_drupal.module
+    callback: localist_drupal_migrate_url
+  localist_endpoint: 'filters'
+  item_selector: event_types
+  fields:
+    -
+      name: event_type_id
+      label: 'Event type ID'
+      selector: id
+    -
+      name: event_type_name
+      label: 'Event type name'
+      selector: name
+    -
+      name: event_type_parent_id
+      label: 'Event type parent ID'
+      selector: parent_id
+  ids:
+    event_type_id:
+      # This would be an int, but it is too long for the DB
+      type: string
+process:
+  name: event_type_name
+  parent:
+    plugin: migration_lookup
+    migration: localist_event_types
+    source: event_type_parent_id
+
+destination:
+  plugin: 'entity:taxonomy_term'
+  default_bundle: localist_event_type
+  overwrite_properties:
+    - name
+```
+
+1. Filters will need to be created in the Localist admin interface first.
+2. To obtain the filter machine name (in our case here it is `event_types`), you can load the API endpoint directly (`https://CALENDAR-URL/api/2/events/filters`) (See [Localist API documentation](https://developer.localist.com/doc/api#event-filters)) and the top-level key will be the name of the different filters available.
+3. Use this for the `item_selector: event_types` as noted above.
+4. To make sure that a hierarchial list works correctly, note the use of the `selector: parent_id` and the `parent` under the process part of the migration.
+5. Make sure the `destination` points to your newly created taxonomy vocabulary.
+6. Finally, go into the Localist settings and add your new custom migration ID (in our example `localist_event_types`) to the Dependency Migrations section of the settings and save.
+7. Click the "Sync now" button in the settings and if all worked, you should have filters showing up in the taxonomy vocabulary.
+
+## Using Custom Filters in an Event Migration
+
+Now that we have the filter terms in Drupal as shown above, the next step is to connect those filters into our events.
+
+1. Create a taxonomy term reference field in your event content type and point it to the newly created taxonomy vocabulary from above. In our case the field name on the content type is `field_localist_event_type`
+2. Add the following to your custom event migration:
+
+```yml
+(custom event migration)
+process:
+  field_localist_event_type:
+    -
+      plugin: extract_localist_filter
+      source: filters
+      filter: event_types
+    -
+      plugin: migration_lookup
+      migration: localist_event_types
+      no_stub: true
+```
+
+The change from a regular migration is the addition of the `extract_localist_filter` plugin which correct connects the filters on each event to the dependency migration so it can attach Drupal events to the corresponding taxonomy term.
+
+3. Run your event migration.
 
 # Helper Methods
 
 Get ticket Info here...
+
+# Troubleshooting
+
+The best way to troubleshoot this module is via normal migration troubleshooting steps.
+
+...

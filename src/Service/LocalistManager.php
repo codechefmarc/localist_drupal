@@ -320,6 +320,18 @@ class LocalistManager extends ControllerBase implements ContainerInjectionInterf
        * $migrationInstance->set('syncSource', TRUE);
        */
 
+      // Handle dependency migrations.
+      $requiredMigrations = $migrationInstance->getRequirements();
+      if (!empty($requiredMigrations)) {
+        $manager = $this->migrationManager;
+        $requiredMigrations = $manager->createInstances($requiredMigrations);
+        foreach ($requiredMigrations as $required) {
+          $message = new MigrateMessage();
+          $executable = new MigrateExecutable($required, $message);
+          $executable->import();
+        }
+      }
+
       $message = new MigrateMessage();
       $executable = new MigrateExecutable($migrationInstance, $message);
       $executable->import();

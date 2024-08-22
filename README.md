@@ -17,7 +17,7 @@
     - [Initial Taxonomy Setup](#initial-taxonomy-setup)
     - [Using Custom Filters in an Event Migration](#using-custom-filters-in-an-event-migration)
   - [Override Properties](#override-properties)
-- [Helper Method Ticket Info](#helper-method-ticket-info)
+- [Helper Method - Ticket Info](#helper-method---ticket-info)
 - [Troubleshooting](#troubleshooting)
 
 # What This Module Does
@@ -80,7 +80,7 @@ If not already added, add the following to the relevant sections of the root `co
 3. It will also override the configuration and add two migrations to the settings: `localist_example_events` and `localist_example_places`.
 
 # Running Migrations
-* As long as the "Enable Localist sync" is checked and the all Preflight Checks are green. migrations will run on cron and will sync events roughly every hour.
+* As long as the "Enable Localist sync" is checked and the all Preflight Checks are green, migrations will run on cron and will sync events roughly every hour.
 * Manual sync is also possible via the settings form by clicking on the "Sync Now" button.
 * If a migration is not found, a warning message will inform only when running migrations from the settings page. Therefore it is a good idea to test migrations via the "Sync Now" button on the settings page.
 
@@ -98,8 +98,8 @@ The following notes will refer to the `migrations/localist_example_events` migra
 
 Take a look at the source structure of the example migration:
 
+`(/migrations/localist_example_events.yml)`
 ```yml
-(/migrations/localist_example_events.yml)
 id: localist_example_events
 label: 'Localist example events'
 source:
@@ -145,8 +145,8 @@ Obviously one of the most important parts of the Localist event migration are th
 
 Note the (truncated) code from the example:
 
+`(/migrations/localist_example_events.yml)`
 ```yml
-(/migrations/localist_example_events.yml)
 source:
   fields:
     -
@@ -161,8 +161,8 @@ For dates coming from Localist, use simply `instances` for the selector and it w
 
 For the group migration, the migration destination must to be set to the `localist_groups` taxonomy vocabulary. Additionally, the `group_id` must go into a field called `field_localist_group_id` as this is what is expected from the source parser plugin callback as noted above.
 
+`(/migrations/localist_groups.yml)`
 ```yml
-(/migrations/localist_groups.yml)
 process:
   name: group_name
   field_localist_group_id: group_id
@@ -188,8 +188,8 @@ Localist allows you to create filters for events for ease of grouping events and
 2. In your event content type, create an entity reference field and point it to the vocabulary in step 1. Make sure this field can accept unlimited values as that is what Localist can do for filters.
 3. In your own custom module as noted in the [Overriding Migrations](#overriding-migrations) section, create a dependency migration to handle the taxonomy terms you want to import:
 
+`(custom taxonomy migration)`
 ```yml
-(custom taxonomy migration)
 id: localist_event_types
 label: 'Localist event_types'
 source:
@@ -245,8 +245,8 @@ Now that we have the filter terms in Drupal as shown above, the next step is to 
 1. Create a taxonomy term reference field in your event content type and point it to the newly created taxonomy vocabulary from above. In our case the field name on the content type is `field_localist_event_type`
 2. Add the following to your custom event migration (note this example here is truncated, see the full example migration for all fields):
 
+`(custom event migration)`
 ```yml
-(custom event migration)
 source:
   fields:
   -
@@ -276,7 +276,7 @@ migration_dependencies:
 
 Drupal migrations come with a way to specify if data already migrated will be overridden from the source or not. Depending on how events are used in Drupal, overriding from source may or may not be what is desired.
 
-If you always want the field data from Localist to take precedence, add the fields to the `override_properties` section of the `destination` part of the migration:
+If you always want the field data from Localist to take precedence and override any edits performed in Drupal, add the fields to the `override_properties` section of the `destination` part of the migration:
 
 ```yml
 destination:
@@ -290,12 +290,12 @@ destination:
     - field_localist_place
 ```
 
-# Helper Method Ticket Info
+# Helper Method - Ticket Info
 
 One helper method that is part of this module is the ability to get real-time ticket information from Localist. To use, the Localist ID is required to be part of the node. This is included with the example migration.
 
+`(/migrations/localist_example_events.yml)`
 ```yml
-(/migrations/localist_example_events.yml)
 source:
   fields:
     -
@@ -316,7 +316,7 @@ $localistID = 45696189005430;
 kint($localistManager->getTicketInfo($localistID));
 ```
 
-This function will return an array of tickets that contains a lot of fields, but the most relevant ones are:
+This function will return an array of tickets, with each ticket containing many fields, but the most relevant ones are:
 
 | Key         | Type    | Description            |
 | ----------- | ------- | ---------------------- |

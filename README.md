@@ -12,7 +12,7 @@
   - [Source Plugin Changes](#source-plugin-changes)
   - [Event Dates](#event-dates)
   - [Group Migration Requirement](#group-migration-requirement)
-  - [Retrieving Custom Filters from Localist into Drupal Taxonomy](#retrieving-custom-filters-from-localist-into-drupal-taxonomy)
+  - [Retrieving Custom Filters from Localist into a Drupal Taxonomy](#retrieving-custom-filters-from-localist-into-a-drupal-taxonomy)
     - [Localist Setup](#localist-setup)
     - [Initial Taxonomy Setup](#initial-taxonomy-setup)
     - [Using Custom Filters in an Event Migration](#using-custom-filters-in-an-event-migration)
@@ -24,14 +24,14 @@
 - [Troubleshooting](#troubleshooting)
 
 # What This Module Does
-* Utilizes Drupal migrations to import events, groups, and taxonomy terms into Drupal. The module provides custom migration plugins and functions to aid with importing data from the Localist API. It also provides a basic group migration with an associated taxonomy vocabulary called Localist Groups.
+* Utilizes Drupal migrations to import events, groups, and taxonomy terms from Localist into Drupal. The module provides custom migration plugins and functions to aid with importing data from the Localist API. It also provides a basic group migration with an associated taxonomy vocabulary called Localist Groups.
 
 * Optionally, an example migration can be created to show how custom migrations can be written.
 
 Any of the migrations can be overridden in a custom module to import most data from the Localist API to any content type and field in Drupal. This includes custom Localist filters. Creating these custom migrations is documented below.
 
 # What is Localist?
-[Localist](https://www.localist.com) is a hosted event management system which offers a branded solution for entering, viewing, filtering, and finding events, they also have an [API](https://developer.localist.com/doc/api) to be able to integrate these events on other platforms.
+[Localist](https://www.localist.com) is a hosted event management system which offers a branded solution for entering, viewing, filtering, and finding events. They also have an [API](https://developer.localist.com/doc/api) to be able to integrate these events on other platforms.
 
 # Module Requirements
 
@@ -68,8 +68,8 @@ If not already added, add the following to the relevant sections of the root `co
 1. Verify the module requirements above. Note the requirement of having composer patches enabled in the root `composer.json`.
 2. Enable the module
 3. Visit the Localist settings page under Configuration -> Web services -> Localist settings (`/admin/config/services/localist`).
-4. Check the box next to Enable Localist sync.
-5. Enter in the Localist endpoint base URL for your organization. Get this by visiting your Localist home page or by asking your Localist representative.
+4. Check the box next to "Enable Localist sync".
+5. Enter the Localist endpoint base URL for your organization. Get this by visiting your Localist home page or by asking your Localist representative.
 6. Click Save Configuration at the bottom.
 7. Once the form refreshes, check the Preflight Check section at the top. If the endpoint works, a green checkmark will appear next to Localist Endpoint.
 8. Click "Create Groups" to create the group taxonomy terms. Groups will synchronize from Localist and be added to the <code>localist_groups</code> taxonomy vocabulary.
@@ -85,7 +85,7 @@ If not already added, add the following to the relevant sections of the root `co
 # Running Migrations
 * As long as the "Enable Localist sync" is checked and the all Preflight Checks are green, migrations will run on cron and will sync events roughly every hour.
 * Manual sync is also possible via the settings form by clicking on the "Sync Now" button.
-* If a migration is not found, a warning message will inform only when running migrations from the settings page. Therefore it is a good idea to test migrations via the "Sync Now" button on the settings page.
+* If a migration is not found, a warning message will inform only when running migrations from the settings page. Therefore, it is a good idea to test migrations via the "Sync Now" button on the settings page.
 
 # Overriding Migrations
 
@@ -93,7 +93,7 @@ Migrations used for this Localist module follow the standard Drupal migration YM
 
 To create your own migrations, create a custom module with a `migrations` directory under the root of the custom module, and create migration `yml` files in that directory that follow a similar structure to the examples provided. Examples are located at `localist_drupal/migrations`.
 
-Enable the custom module, and then enter the migration `id` into the Localist settings form in the appropriate field. For example, if it is an events migration, enter the machine name into the "Event Migration" field and save the settings. The group migration can also be overridden (see below) and there are also dependency migrations (that will get imported before events - i.e. for things like taxonomy terms).
+Enable the custom module, and then enter the migration `id` into the Localist settings form in the appropriate field. For example, if it is an events migration, enter the machine name into the "Event Migration" field and save the settings. The group migration can also be overridden (see below) and there are also dependency migrations (that will get imported before events - for example Localist filters into a taxonomy vocabulary).
 
 The following notes will refer to the `migrations/localist_example_events` migration provided in this module as an example.
 
@@ -130,7 +130,7 @@ source:
       type: string
 ```
 
-1. The `id` of the migration must be unique and is what is used in the settings form to inform the Localist Drupal module.
+1. The `id` of the migration must be unique and is what is used in the settings form to inform the Localist Drupal module which migration is for events.
 2. The data parser plugin as part of the source uses a custom `localist_json` parser that handles the unique structure of the Localist API.
 3. The `urls` does not provide a direct URL, but instead a callback function to allow the URL to come from the settings form, supports paging in the Localist API, and allows the same callback to be used across multiple migrations.
 4. The `localist_endpoint` is required to tell the callback which endpoint to use. The following endpoints are currently supported:
@@ -166,6 +166,16 @@ For the group migration, the migration destination must to be set to the `locali
 
 `(migrations/localist_groups.yml)`
 ```yml
+source:
+  fields:
+    -
+      name: group_id
+      label: 'Group ID'
+      selector: group/id
+    -
+      name: group_name
+      label: 'Group name'
+      selector: group/name
 process:
   name: group_name
   field_localist_group_id: group_id
@@ -176,7 +186,9 @@ destination:
 
 Aside from those requirements, additional group information from Localist can be migrated over via an overridden group migration. See [The Localist API Groups](https://developer.localist.com/doc/api#groups) for more fields that can come over into additional fields in this taxonomy vocabulary.
 
-## Retrieving Custom Filters from Localist into Drupal Taxonomy
+To override the group migration, copy the one that comes with this module at `migrations/localist_groups.yml` into your own custom module, change the ID, and add additional fields to sync from Localist.
+
+## Retrieving Custom Filters from Localist into a Drupal Taxonomy
 
 Localist allows you to create filters for events for ease of grouping events and filtering. To get these filters over into Drupal, we recommend using a taxonomy vocabulary per filter. The event migration will use one of the custom process plugins (`extract_localist_filter`) to make this work. Here are the steps.
 
@@ -188,7 +200,7 @@ Localist allows you to create filters for events for ease of grouping events and
 ### Initial Taxonomy Setup
 
 1. Set up your Drupal taxonomy vocabulary. For our example, we will use Event Type (`localist_event_type`).
-2. In your event content type, create an entity reference field and point it to the vocabulary in step 1. Make sure this field can accept unlimited values as that is what Localist can do for filters.
+2. In your event content type, create an entity reference field and point it to the vocabulary in step 1. Make sure this field can accept unlimited values as that is what Localist supports for filters.
 3. In your own custom module as noted in the [Overriding Migrations](#overriding-migrations) section, create a dependency migration to handle the taxonomy terms you want to import:
 
 `(custom taxonomy migration)`
@@ -237,16 +249,15 @@ destination:
 ```
 
 4. Note the `item_selector: event_types` - this is what pulls from the API from Localist.
-5. To make sure that a hierarchial list works correctly, note the use of the `selector: parent_id` and the `parent` under the process part of the migration.
+5. To make sure that a hierarchial list works correctly, note the use of the `selector: parent_id` and the `parent` under the process section of the migration.
 6. Make sure the `destination` points to your newly created taxonomy vocabulary.
-7. Finally, go into the Localist settings and add your new custom migration ID (in our example `localist_event_types`) to the Dependency Migrations section of the settings and save.
+7. Finally, go into the Localist settings page and add your new custom migration ID (in our example `localist_event_types`) to the Dependency Migrations section of the settings and save.
 
 ### Using Custom Filters in an Event Migration
 
 Now that we have the filter terms in Drupal as shown above, the next step is to connect those filters into our events.
 
-1. Create a taxonomy term reference field in your event content type and point it to the newly created taxonomy vocabulary from above. In our case the field name on the content type is `field_localist_event_type`
-2. Add the following to your custom event migration (note this example here is truncated, see the full example migration for all fields):
+1. Add the following to your custom event migration (note this example here is truncated, see the full example migration for all fields):
 
 `(custom event migration)`
 ```yml
@@ -271,9 +282,9 @@ migration_dependencies:
     - localist_event_types
 ```
 
-3. The change from a regular migration is the addition of the `extract_localist_filter` plugin which correct connects the filters on each event to the dependency migration so it can attach Drupal events to the corresponding taxonomy term.
-4. If not already done, enter your event migration ID into the "Event Migration" field in the settings form.
-5. Run your event migration.
+2. The change from a regular migration is the addition of the `extract_localist_filter` plugin which correctly connects the filters on each event to the dependency migration so it can attach Drupal events to the corresponding taxonomy term.
+3. If not already done, enter your event migration ID into the "Event Migration" field in the settings form.
+4. Run your event migration.
 
 ## Override Properties
 
@@ -315,7 +326,7 @@ process:
 
 ## Helper migration plugin - Group taxonomy reference
 
-Groups are always imported into the `localist_groups` taxonomy, but in the examples, are not connected to the event migration. To retrieve the group name and use it as an entity reference (similar to how filters are handled), use the `extract_localist_groups` helper plugin. This requires to setup of an entity reference field on the event content type.
+Groups are always imported into the `localist_groups` taxonomy, but in the examples, are not connected to events. To retrieve the group name and use it as an entity reference (similar to how filters are handled), use the `extract_localist_groups` helper plugin. This requires the setup of an entity reference field on the event content type.
 
 `(custom event migration)`
 ```yml
@@ -338,7 +349,7 @@ process:
 
 ## Helper Method - Ticket Info
 
-One helper method that is part of this module is the ability to get real-time ticket information from Localist. To use, the Localist ID is required to be part of the node. This is included with the example migration.
+The `getTicketInfo` helper method has the ability to get real-time ticket information from Localist. To use, the Localist ID is required to be saved in a field as part of the node. This is included with the example migration.
 
 `(migrations/localist_example_events.yml)`
 ```yml
@@ -357,10 +368,12 @@ The ticket helper can be called in a Drupal `preprocess` function or custom serv
 ```php
 
 $localistManager = \Drupal::service('localist_drupal.manager');
-// Get the localist ID dynamically from the field value.
-$localistID = 45696189005430;
-kint($localistManager->getTicketInfo($localistID));
+// Get the localist event ID dynamically from the field value.
+$localistEventID = 45696189005430;
+kint($localistManager->getTicketInfo($localistEventID));
 ```
+
+Note in the example, the event ID is hardcoded - in your custom module, the ID would come from the the localist ID field on the event node.
 
 This function will return an array of tickets, with each ticket containing many fields, but the most relevant ones are:
 
@@ -374,7 +387,7 @@ This function will return an array of tickets, with each ticket containing many 
 
 # Troubleshooting
 
-The best way to troubleshoot this module is via normal migration troubleshooting steps. But here are some starting places:
+The best way to troubleshoot this module is via regular Drupal migration troubleshooting steps. But here are some starting places:
 
 1. [Drupal Debugging Migrations page](https://www.drupal.org/docs/drupal-apis/migrate-api/debugging-migrations)
 2. The previously linked article has some great tips for [debugging migrations part 1](https://understanddrupal.com/lessons/how-debug-drupal-migrations-part-1/) and [debugging migrations part 2](https://understanddrupal.com/lessons/how-debug-drupal-migrations-part-2/).

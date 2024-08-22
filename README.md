@@ -17,7 +17,10 @@
     - [Initial Taxonomy Setup](#initial-taxonomy-setup)
     - [Using Custom Filters in an Event Migration](#using-custom-filters-in-an-event-migration)
   - [Override Properties](#override-properties)
-- [Helper Method - Ticket Info](#helper-method---ticket-info)
+- [Helper Plugins and Methods](#helper-plugins-and-methods)
+  - [Helper migration plugin - Photo description](#helper-migration-plugin---photo-description)
+  - [Helper migration plugin - Group taxonomy reference](#helper-migration-plugin---group-taxonomy-reference)
+  - [Helper Method - Ticket Info](#helper-method---ticket-info)
 - [Troubleshooting](#troubleshooting)
 
 # What This Module Does
@@ -98,7 +101,7 @@ The following notes will refer to the `migrations/localist_example_events` migra
 
 Take a look at the source structure of the example migration:
 
-`(/migrations/localist_example_events.yml)`
+`(migrations/localist_example_events.yml)`
 ```yml
 id: localist_example_events
 label: 'Localist example events'
@@ -145,7 +148,7 @@ Obviously one of the most important parts of the Localist event migration are th
 
 Note the (truncated) code from the example:
 
-`(/migrations/localist_example_events.yml)`
+`(migrations/localist_example_events.yml)`
 ```yml
 source:
   fields:
@@ -161,7 +164,7 @@ For dates coming from Localist, use simply `instances` for the selector and it w
 
 For the group migration, the migration destination must to be set to the `localist_groups` taxonomy vocabulary. Additionally, the `group_id` must go into a field called `field_localist_group_id` as this is what is expected from the source parser plugin callback as noted above.
 
-`(/migrations/localist_groups.yml)`
+`(migrations/localist_groups.yml)`
 ```yml
 process:
   name: group_name
@@ -290,11 +293,54 @@ destination:
     - field_localist_place
 ```
 
-# Helper Method - Ticket Info
+# Helper Plugins and Methods
+
+## Helper migration plugin - Photo description
+
+To retrieve the image description from Localist (for example to use as alternative text for imported images), use the `get_localist_image_desc` helper plugin. This requires the additional field of the `photo_id`:
+
+`(custom event migration)`
+```yml
+source:
+  fields:
+    -
+      name: localist_image_id
+      label: 'Localist image ID'
+      selector: localist_data/photo_id
+process:
+  field_localist_event_image_alt:
+    plugin: get_localist_image_desc
+    source: localist_image_id
+```
+
+## Helper migration plugin - Group taxonomy reference
+
+Groups are always imported into the `localist_groups` taxonomy, but in the examples, are not connected to the event migration. To retrieve the group name and use it as an entity reference (similar to how filters are handled), use the `extract_localist_groups` helper plugin. This requires to setup of an entity reference field on the event content type.
+
+`(custom event migration)`
+```yml
+source:
+  fields:
+    -
+      name: localist_groups
+      label: 'Localist groups'
+      selector: localist_data/groups
+process:
+  field_localist_group:
+    -
+      plugin: extract_localist_groups
+      source: localist_groups
+    -
+      plugin: migration_lookup
+      migration: localist_groups
+      no_stub: true
+```
+
+## Helper Method - Ticket Info
 
 One helper method that is part of this module is the ability to get real-time ticket information from Localist. To use, the Localist ID is required to be part of the node. This is included with the example migration.
 
-`(/migrations/localist_example_events.yml)`
+`(migrations/localist_example_events.yml)`
 ```yml
 source:
   fields:

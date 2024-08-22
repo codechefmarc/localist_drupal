@@ -527,7 +527,7 @@ class LocalistManager extends ControllerBase implements ContainerInjectionInterf
     if ($response) {
       $data = json_decode($response->getBody()->getContents(), TRUE);
       foreach ($data['tickets'] as $ticket) {
-          $ticketData[] = $ticket['ticket'];
+        $ticketData[] = $ticket['ticket'];
       }
     }
     return $ticketData;

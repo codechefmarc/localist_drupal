@@ -39,7 +39,7 @@ source:
 
 process:
   title: localist_title
-  #field_localist_id: event_id
+  field_localist_id: event_id
   field_localist_description/value: localist_description
   field_localist_description/format:
     plugin: first_text_format
@@ -57,7 +57,7 @@ destination:
   default_bundle: localist_event
   overwrite_properties:
     - title
-    #- field_localist_id
+    - field_localist_id
     - field_localist_description
     - field_localist_date
     - field_localist_place

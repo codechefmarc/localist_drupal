@@ -172,7 +172,7 @@ class LocalistManager extends ControllerBase implements ContainerInjectionInterf
         $groupId = $this->getGroupTaxonomyEntity();
 
         if ($groupId) {
-          $eventsURL = "$this->endpointBase/api/2/events";
+          $eventsURL = "$this->endpointBase/api/2.0/events";
 
           // Gets the latest version from the API by changing the URL each time.
           $version = time();
@@ -186,29 +186,29 @@ class LocalistManager extends ControllerBase implements ContainerInjectionInterf
         break;
 
       case 'places':
-        $placesURL = "$this->endpointBase/api/2/places?pp=100";
+        $placesURL = "$this->endpointBase/api/2.0/places?pp=100";
         $endpointsWithParams = $this->getMultiPageUrls($placesURL);
 
         break;
 
       case 'filters':
-        $endpointsWithParams[] = "$this->endpointBase/api/2/events/filters";
+        $endpointsWithParams[] = "$this->endpointBase/api/2.0/events/filters";
 
         break;
 
       case 'groups':
-        $groupsURL = "$this->endpointBase/api/2/groups?pp=100";
+        $groupsURL = "$this->endpointBase/api/2.0/groups?pp=100";
         $endpointsWithParams = $this->getMultiPageUrls($groupsURL);
 
         break;
 
       case 'photos':
-        $endpointsWithParams[] = "$this->endpointBase/api/2/photos";
+        $endpointsWithParams[] = "$this->endpointBase/api/2.0/photos";
 
         break;
 
       case 'tickets':
-        $endpointsWithParams[] = "$this->endpointBase/api/2/events";
+        $endpointsWithParams[] = "$this->endpointBase/api/2.0/events";
 
         break;
 
@@ -457,7 +457,7 @@ class LocalistManager extends ControllerBase implements ContainerInjectionInterf
   public function checkEndpoint() {
     $returnVal = FALSE;
     if ($endpoint = $this->localistConfig->get('localist_endpoint')) {
-      $endpointUrl = $endpoint . "/api/2/events";
+      $endpointUrl = $endpoint . "/api/2.0/events";
       try {
         $response = $this->httpClient->get($endpointUrl);
         $returnVal = str_contains($response->getHeader("Content-Type")[0], 'json') ? TRUE : FALSE;

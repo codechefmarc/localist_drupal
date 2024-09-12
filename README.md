@@ -21,6 +21,7 @@
   - [Helper migration plugin - Photo description](#helper-migration-plugin---photo-description)
   - [Helper migration plugin - Group taxonomy reference](#helper-migration-plugin---group-taxonomy-reference)
   - [Helper Method - Ticket Info](#helper-method---ticket-info)
+- [Advanced Usage](#advanced-usage)
 - [Troubleshooting](#troubleshooting)
 
 # What This Module Does
@@ -91,7 +92,7 @@ If not already added, add the following to the relevant sections of the root `co
 
 Migrations used for this Localist module follow the standard Drupal migration YML structure with a few small changes noted below. If you are new to the migration API, a great resource is [31 days of Drupal migrations](https://understanddrupal.com/courses/31-days-of-migrations/).
 
-To create your own migrations, create a custom module with a `migrations` directory under the root of the custom module, and create migration `yml` files in that directory that follow a similar structure to the examples provided. Examples are located at `localist_drupal/migrations`.
+To create your own migrations, create a custom module. Create migration `yml` files in a `/migrations` directory under the root of the custom module that follow a similar structure to the examples provided. Examples are located at `localist_drupal/migrations`.
 
 Enable the custom module, and then enter the migration `id` into the Localist settings form in the appropriate field. For example, if it is an events migration, enter the machine name into the "Event Migration" field and save the settings. The group migration can also be overridden (see below) and there are also dependency migrations (that will get imported before events - for example Localist filters into a taxonomy vocabulary).
 
@@ -131,7 +132,7 @@ source:
 ```
 
 1. The `id` of the migration must be unique and is what is used in the settings form to inform the Localist Drupal module which migration is for events.
-2. The data parser plugin as part of the source uses a custom `localist_json` parser that handles the unique structure of the Localist API.
+2. The `data_parser_plugin` plugin as part of the source uses a custom `localist_json` parser that handles the unique structure of the Localist API.
 3. The `urls` does not provide a direct URL, but instead a callback function to allow the URL to come from the settings form, supports paging in the Localist API, and allows the same callback to be used across multiple migrations.
 4. The `localist_endpoint` is required to tell the callback which endpoint to use. The following endpoints are currently supported:
 - `events`
@@ -140,7 +141,7 @@ source:
 - `groups`
 - `photos`
 - `tickets`
-5. In the `fields` section for the title field (for example), notice the `selector` is pointing to `localist_data/title` - the `localist_data/` is important to preface before the field name from Localist. Field names from Localist can be found in the events section of the [Localist API documentation](https://developer.localist.com/doc/api#events).
+1. In the `fields` section for the title field (for example), notice the `selector` is pointing to `localist_data/title` - the `localist_data/` is important to preface before the field name from Localist. The exception are the dates, noted below. Field names from Localist can be found in the events section of the [Localist API documentation](https://developer.localist.com/doc/api#events).
 
 ## Event Dates
 
@@ -186,7 +187,7 @@ destination:
 
 Aside from those requirements, additional group information from Localist can be migrated over via an overridden group migration. See [The Localist API Groups](https://developer.localist.com/doc/api#groups) for more fields that can come over into additional fields in this taxonomy vocabulary.
 
-To override the group migration, copy the one that comes with this module at `migrations/localist_groups.yml` into your own custom module, change the ID, and add additional fields to sync from Localist.
+To override the group migration, copy the one that comes with this module at `migrations/localist_groups.yml` into your own custom module, change the ID, and add additional fields to sync from Localist. Then, add the new id of your migration into the "Group Migration" field on the settings form.
 
 ## Retrieving Custom Filters from Localist into a Drupal Taxonomy
 
@@ -366,7 +367,6 @@ process:
 The ticket helper can be called in a Drupal `preprocess` function or custom service:
 
 ```php
-
 $localistManager = \Drupal::service('localist_drupal.manager');
 // Get the localist event ID dynamically from the field value.
 $localistEventID = 45696189005430;
@@ -385,6 +385,13 @@ This function will return an array of tickets, with each ticket containing many 
 | price       | integer | Ticket price           |
 | ticket_type | string  | Ticket type            |
 
+# Advanced Usage
+Once "Enable Localist sync" has been turned on and all preflight checks are complete, it is possible to turn off the sync on the settings page and manage migrations manually. It is still required to have the following in place:
+1. A working endpoint base URL.
+2. [Group migration requirements](#group-migration-requirement) and groups imported.
+3. A Localist group must be selected.
+4. If the sync is off, no migrations will be run via cron from this module and any migrations needing to be done will have to be done manually or via other automatic methods.
+
 # Troubleshooting
 
 The best way to troubleshoot this module is via regular Drupal migration troubleshooting steps. But here are some starting places:
@@ -396,4 +403,5 @@ The best way to troubleshoot this module is via regular Drupal migration trouble
    2. Import migrations manually `drush mim <id_of_migration>`
    3. Rollback migrations: `drush mr <id_of_migration>`
    4. Reset failed migrations (review the status table (`drush ms`) to see any pending migrations): `drush mrs <id_of_migration>`
-4. Double and triple check for typos in the migration files. Make sure the field names, content type, taxonomy vocabularies, and machine names for the Localist API keys are correct.
+4. Overridden migrations must be in your own custom module and that module needs to be enabled.
+5. Double and triple check for typos in the migration files. Make sure the field names, content type, taxonomy vocabularies, and machine names for the Localist API keys are correct.

@@ -171,7 +171,7 @@ class LocalistSettings extends ConfigFormBase {
     ];
 
     // Only show the group picker if the group migration has been run.
-    if ($localistEnabled && $groupsImported && $endpointValid) {
+    if ($groupsImported && $endpointValid) {
       $term = NULL;
       if ($localistGroup) {
         $term = $config->get('localist_group') ? $this->entityTypeManager->getStorage('taxonomy_term')->load($config->get('localist_group')) : NULL;

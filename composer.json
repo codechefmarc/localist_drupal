@@ -13,12 +13,5 @@
       "drupal/migrate_plus": "^6.0",
       "drupal/migrate_tools": "^6.0",
       "drupal/smart_date": "^4.1"
-    },
-    "extra": {
-      "patches": {
-        "drupal/migrate_plus": {
-        "Allow callback for Url source, and single item Json plugin https://www.drupal.org/project/migrate_plus/issues/3040427": "https://www.drupal.org/files/issues/2023-02-15/3040427-42-migrate_plus_multiple_urls.patch"
-        }
-      }
     }
 }

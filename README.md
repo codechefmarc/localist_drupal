@@ -25,28 +25,26 @@
 - [Troubleshooting](#troubleshooting)
 
 # What This Module Does
-- Utilizes Drupal migrations to import events, groups, and taxonomy terms from Localist into Drupal. The module provides custom migration plugins and functions to aid with importing data from the Localist API. It also provides a basic group migration with an associated taxonomy vocabulary called Localist Groups.
+* Utilizes Drupal migrations to import events, groups, and taxonomy terms from Localist into Drupal. The module provides custom migration plugins and functions to aid with importing data from the Localist API. It also provides a basic group migration with an associated taxonomy vocabulary called Localist Groups.
 
-- Optionally, an example migration can be created to show how custom migrations can be written.
+* Optionally, an example migration can be created to show how custom migrations can be written.
 
 Any of the migrations can be overridden in a custom module to import most data from the Localist API to any content type and field in Drupal. This includes custom Localist filters. Creating these custom migrations is documented below.
 
 # What is Localist?
-
 [Localist](https://www.localist.com) is a hosted event management system which offers a branded solution for entering, viewing, filtering, and finding events. They also have an [API](https://developer.localist.com/doc/api) to be able to integrate these events on other platforms.
 
 # Module Requirements
 
-- Drupal Core Migrate
-- [Migrate Plus](https://www.drupal.org/project/migrate_plus)
-- [Migrate Tools](https://www.drupal.org/project/migrate_tools)
-- [Smart Date](https://www.drupal.org/project/smart_date) - Smart date handles start and end times that work better with Localist dates.
-- **NOTE: Composer patches needs to be enabled in the root `composer.json`**
-  - Currently, there is a patch for the `migrate_plus` module that enables the use of a callback function for migration source URLs.
-  - This patch is included in this module's `composer.json` and this requirement will be removed once [the issue on Drupal.org](https://www.drupal.org/project/migrate_plus/issues/3040427) has been solved.
+* Drupal Core Migrate
+* [Migrate Plus](https://www.drupal.org/project/migrate_plus)
+* [Migrate Tools](https://www.drupal.org/project/migrate_tools)
+* [Smart Date](https://www.drupal.org/project/smart_date) - Smart date handles start and end times that work better with Localist dates.
+* **NOTE: Composer patches needs to be enabled in the root `composer.json`**
+  * Currently, there is a patch for the `migrate_plus` module that enables the use of a callback function for migration source URLs.
+  * This patch is included in this module's `composer.json` and this requirement will be removed once [the issue on Drupal.org](https://www.drupal.org/project/migrate_plus/issues/3040427) has been solved.
 
 ## Add Composer Patches
-
 If not already added, add the following to the relevant sections of the root `composer.json` and then run `composer update`.
 
 ```(json)
@@ -68,7 +66,6 @@ If not already added, add the following to the relevant sections of the root `co
 ```
 
 # Initial Setup
-
 1. Verify the module requirements above. Note the requirement of having composer patches enabled in the root `composer.json`.
 2. Enable the module
 3. Visit the Localist settings page under Configuration -> Web services -> Localist settings (`/admin/config/services/localist`).
@@ -87,9 +84,9 @@ If not already added, add the following to the relevant sections of the root `co
 3. It will also override the configuration and add two migrations to the settings: `localist_example_events` and `localist_example_places`.
 
 # Running Migrations
-- As long as the "Enable Localist sync" is checked and the all Preflight Checks are green, migrations will run on cron and will sync events roughly every hour.
-- Manual sync is also possible via the settings form by clicking on the "Sync Now" button.
-- If a migration is not found, a warning message will inform only when running migrations from the settings page. Therefore, it is a good idea to test migrations via the "Sync Now" button on the settings page.
+* As long as the "Enable Localist sync" is checked and the all Preflight Checks are green, migrations will run on cron and will sync events roughly every hour.
+* Manual sync is also possible via the settings form by clicking on the "Sync Now" button.
+* If a migration is not found, a warning message will inform only when running migrations from the settings page. Therefore, it is a good idea to test migrations via the "Sync Now" button on the settings page.
 
 # Overriding Migrations
 
@@ -106,7 +103,6 @@ The following notes will refer to the `migrations/localist_example_events` migra
 Take a look at the source structure of the example migration:
 
 `(migrations/localist_example_events.yml)`
-
 ```yml
 id: localist_example_events
 label: 'Localist example events'
@@ -139,14 +135,12 @@ source:
 2. The `data_parser_plugin` plugin as part of the source uses a custom `localist_json` parser that handles the unique structure of the Localist API.
 3. The `urls` does not provide a direct URL, but instead a callback function to allow the URL to come from the settings form, supports paging in the Localist API, and allows the same callback to be used across multiple migrations.
 4. The `localist_endpoint` is required to tell the callback which endpoint to use. The following endpoints are currently supported:
-
 - `events`
 - `places`
 - `filters`
 - `groups`
 - `photos`
 - `tickets`
-
 1. In the `fields` section for the title field (for example), notice the `selector` is pointing to `localist_data/title` - the `localist_data/` is important to preface before the field name from Localist. The exception are the dates, noted below. Field names from Localist can be found in the events section of the [Localist API documentation](https://developer.localist.com/doc/api#events).
 
 ## Event Dates
@@ -156,7 +150,6 @@ Obviously one of the most important parts of the Localist event migration are th
 Note the (truncated) code from the example:
 
 `(migrations/localist_example_events.yml)`
-
 ```yml
 source:
   fields:
@@ -173,7 +166,6 @@ For dates coming from Localist, use simply `instances` for the selector and it w
 For the group migration, the migration destination must to be set to the `localist_groups` taxonomy vocabulary. Additionally, the `group_id` must go into a field called `field_localist_group_id` as this is what is expected from the source parser plugin callback as noted above.
 
 `(migrations/localist_groups.yml)`
-
 ```yml
 source:
   fields:
@@ -213,7 +205,6 @@ Localist allows you to create filters for events for ease of grouping events and
 3. In your own custom module as noted in the [Overriding Migrations](#overriding-migrations) section, create a dependency migration to handle the taxonomy terms you want to import:
 
 `(custom taxonomy migration)`
-
 ```yml
 id: localist_event_types
 label: 'Localist event_types'
@@ -270,7 +261,6 @@ Now that we have the filter terms in Drupal as shown above, the next step is to 
 1. Add the following to your custom event migration (note this example here is truncated, see the full example migration for all fields):
 
 `(custom event migration)`
-
 ```yml
 source:
   fields:
@@ -322,7 +312,6 @@ destination:
 To retrieve the image description from Localist (for example to use as alternative text for imported images), use the `get_localist_image_desc` helper plugin. This requires the additional field of the `photo_id`:
 
 `(custom event migration)`
-
 ```yml
 source:
   fields:
@@ -341,7 +330,6 @@ process:
 Groups are always imported into the `localist_groups` taxonomy, but in the examples, are not connected to events. To retrieve the group name and use it as an entity reference (similar to how filters are handled), use the `extract_localist_groups` helper plugin. This requires the setup of an entity reference field on the event content type.
 
 `(custom event migration)`
-
 ```yml
 source:
   fields:
@@ -365,7 +353,6 @@ process:
 The `getTicketInfo` helper method has the ability to get real-time ticket information from Localist. To use, the Localist ID is required to be saved in a field as part of the node. This is included with the example migration.
 
 `(migrations/localist_example_events.yml)`
-
 ```yml
 source:
   fields:
@@ -377,7 +364,6 @@ process:
   title: localist_title
   field_localist_id: event_id
 ```
-
 The ticket helper can be called in a Drupal `preprocess` function or custom service:
 
 ```php
@@ -400,9 +386,7 @@ This function will return an array of tickets, with each ticket containing many 
 | ticket_type | string  | Ticket type            |
 
 # Advanced Usage
-
 Once "Enable Localist sync" has been turned on and all preflight checks are complete, it is possible to turn off the sync on the settings page and manage migrations manually. It is still required to have the following in place:
-
 1. A working endpoint base URL.
 2. [Group migration requirements](#group-migration-requirement) and groups imported.
 3. A Localist group must be selected.
@@ -421,5 +405,3 @@ The best way to troubleshoot this module is via regular Drupal migration trouble
    4. Reset failed migrations (review the status table (`drush ms`) to see any pending migrations): `drush mrs <id_of_migration>`
 4. Overridden migrations must be in your own custom module and that module needs to be enabled.
 5. Double and triple check for typos in the migration files. Make sure the field names, content type, taxonomy vocabularies, and machine names for the Localist API keys are correct.
-
--

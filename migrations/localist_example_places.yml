@@ -1,7 +1,7 @@
 id: localist_example_places
 label: 'Localist example places'
 source:
-  plugin: url
+  plugin: callback_url
   data_fetcher_plugin: http
   data_parser_plugin: json
   track_changes: true

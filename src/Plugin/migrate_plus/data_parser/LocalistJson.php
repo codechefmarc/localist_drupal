@@ -42,12 +42,12 @@ class LocalistJson extends Json implements ContainerFactoryPluginInterface, Data
    *
    * @param string $url
    *   URL of a JSON feed.
-   * @param string|int $item_selector
+   * @param string|int|bool $item_selector
    *   Selector within the data content at which useful data is found.
    *
    * @throws \GuzzleHttp\Exception\RequestException
    */
-  protected function getSourceData(string $url, string|int $item_selector = '') {
+  protected function getSourceData(string $url, string|int|bool $item_selector = '') {
     // Use cached source data if this is the first request or URL is same as the
     // last time we made the request.
     if ($this->currentUrl != $url || !$this->sourceData) {
@@ -87,8 +87,8 @@ class LocalistJson extends Json implements ContainerFactoryPluginInterface, Data
 
       // Treat source data as a single object to import if itemSelector is
       // explicitly set to FALSE.
-      if ($this->itemSelector === FALSE) {
-        return [$source_data];
+      if ($item_selector === FALSE) {
+        return [$this->sourceData];
       }
 
       // Otherwise, we're using xpath-like selectors.

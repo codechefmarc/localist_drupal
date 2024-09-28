@@ -75,20 +75,6 @@ function localist_drupal_theme($existing, $type, $theme, $path) {
 }
 
 /**
- * Returns dynamic URLs for Localist event migrations.
- *
- * @see migrations/localist_events.yml
- */
-function localist_drupal_migrate_url(MigrationInterface $migration) {
-  $endpointType = $migration->getPluginDefinition()['source']['localist_endpoint'] ?? 'events';
-  $localistManager = \Drupal::service('localist_drupal.manager');
-
-  $endpointURLs = $localistManager->getEndpointUrls($endpointType);
-
-  return $endpointURLs;
-}
-
-/**
  * Implements hook_cron().
  */
 function localist_drupal_cron() {

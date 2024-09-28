@@ -1,13 +1,10 @@
 id: localist_groups
 label: 'Localist groups'
 source:
-  plugin: callback_url
+  plugin: localist_url
   data_fetcher_plugin: http
   data_parser_plugin: json
   track_changes: true
-  urls:
-    # @see localist_groups.module
-    callback: localist_drupal_migrate_url
   localist_endpoint: 'groups'
   item_selector: groups
   fields:

@@ -1,5 +1,5 @@
 id: {{ migration_id }}
-label: 'Localist example events'
+label: '{{ label }}'
 source:
   plugin: localist_url
   data_fetcher_plugin: http
@@ -36,26 +36,16 @@ source:
 
 process:
   title: localist_title
-  field_localist_id: event_id
-  field_localist_description/value: localist_description
-  field_localist_description/format:
+  {{ dest_desc_field }}/value: localist_description
+  {{ dest_desc_field }}/format:
     plugin: first_text_format
-  field_localist_date: event_dates
-  field_localist_place:
-    plugin: entity_lookup
-    source: place_name
-    value_key: name
-    bundle_key: vid
-    bundle: localist_places
-    entity_type: taxonomy_term
+  {{ dest_smart_date_field }}: event_dates
 
 destination:
   plugin: 'entity:node'
-  default_bundle: localist_event
+  default_bundle: {{ target_bundle }}
   overwrite_properties:
     - title
-    - field_localist_id
-    - field_localist_description
-    - field_localist_date
-    - field_localist_place
+    - {{ dest_desc_field }}
+    - {{ dest_smart_date_field }}
 
